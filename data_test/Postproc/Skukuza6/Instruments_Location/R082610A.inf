@@ -1,0 +1,83 @@
+Setup Used:              ASCII ronan
+Export Format:           Configurable ASCII
+Data Type:               GNSS Positions
+Use Of Positions:        One point per GNSS position
+Export Notes:            No
+Export Velocity Records: No
+Export Sensor Records:   No
+File Option:             One File Set Per Feature
+Templates:               ronan
+File Structure:          DOS
+Export Menu Attribute As:Attribute Value
+Generated Attributes:    Corr Type
+                         GPS Date
+                         GPS Time
+                         GNSS Height
+                         Vert Prec
+                         Horz Prec
+                         Latitude
+                         Longitude
+                         Northing
+                         Easting
+                         Point_ID
+                         GNSS Length
+                         GNSS 3DLength
+                         Line_ID
+                         GNSS Area
+                         Area_ID
+Position Filter Details: 
+Filter By:               GNSS Criteria
+Maximum PDOP:            Any
+Maximum HDOP:            Any
+Min Number Of SVs:       2D (3 or more measurements)
+Uncorrected:             No
+P(Y) Code:               Yes
+Real-time SBAS:          Yes
+Real-time Code:          Yes
+Postprocessed Code:      Yes
+Real-time Carrier Float: Yes
+Postprocessed Carrier Float:Yes
+RTK Fixed:               Yes
+Postprocessed Carrier Fixed:Yes
+Non-GNSS:                Yes
+Coordinate System:       Lat/Long
+Datum:                   WGS 1984
+Altitude Units:          Meters
+Altitude Reference:      HAE
+Include Altitude:        No
+Distance Units:          Meters
+Area Units:              Square Meters
+Velocity Units:          Meters Per Second
+Precision Units:         Meters
+Lat/Long Format:         DDD.dddddd
+Quadrant:                +/-
+Lat/Long DP:             9
+Altitude DP:             3
+Distance DP:             3
+Area DP:                 3
+                         
+Data Dictionary
+---------------
+PosnPnt - Point Feature
+    Corr Type - String, Length = 36
+    GPS Date - Date
+    GPS Time - Time
+    GNSS Height - Numeric, DP = 3, Min = 0.000, Max = 0.000, Default = 0.000
+    Vert Prec - Numeric, DP = 1, Min = 0.0, Max = 0.0, Default = 0.0
+    Horz Prec - Numeric, DP = 1, Min = 0.0, Max = 0.0, Default = 0.0
+    Latitude - String, Length = 36
+    Longitude - String, Length = 36
+    Point_ID - Numeric, DP = 0, Min = 0, Max = 0, Default = 0
+PosnLine - Line Feature
+    Corr Type - String, Length = 36
+    GPS Date - Date
+    GPS Time - Time
+    GNSS Length - Numeric, DP = 3, Min = 0.000, Max = 0.000, Default = 0.000
+    GNSS 3DLength - Numeric, DP = 3, Min = 0.000, Max = 0.000, Default = 0.000
+    Line_ID - Numeric, DP = 0, Min = 0, Max = 0, Default = 0
+PosnArea - Area Feature
+    Corr Type - String, Length = 36
+    GPS Date - Date
+    GPS Time - Time
+    GNSS Area - Numeric, DP = 3, Min = 0.000, Max = 0.000, Default = 0.000
+    Area_ID - Numeric, DP = 0, Min = 0, Max = 0, Default = 0
