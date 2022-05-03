@@ -61,7 +61,8 @@ run driver.py -h
 `Ngarkat` is the data set provided with the code. 
 It can be downloaded at [XX](http://wwww.)
 
-the 'root' directory define in the config file  should look like this.
+the 'root' directory define in the config file should look like this.
+```
 .
 ├── Data
 │   ├── FLIR570
@@ -87,7 +88,7 @@ the 'root' directory define in the config file  should look like this.
     │   └── > output data processing 
     └── OrthoData
         └── > output final data
-
+```
 The two first child 'Data/' and 'Postproc/' are named in the config file with variable 
 `root_data` and `root_postproc`
 
