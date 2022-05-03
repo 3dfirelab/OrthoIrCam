@@ -3,7 +3,7 @@
 
 <img src="data_static/img/msca.jpg"
      alt="MSCA"
-     style="float: left; margin-right: 10px;display: block; max-width: 100px" />
+     style="float: left; margin-right: 10px;display: block; max-width: 50px" />
 This code was developped within the [3DFireLab](https://3dfirelab.eu/) project, a project funded by the European Union’s Horizon 2020 research and innovation program under the Marie Skłodowska-Curie agreement, grant H2020-MSCA-IF-2019-892463. 
 
 
