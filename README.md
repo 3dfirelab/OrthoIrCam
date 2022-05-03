@@ -1,6 +1,7 @@
 # OrthoIrCam
 
 
+## Funding
 <img src="data_static/img/msca.jpg"
      alt="MSCA"
      style="float: right; margin-left: 1rem; display: block; max-width: 50px" />
@@ -51,14 +52,44 @@ Follows a quick description of each steps:
 ### Algo1 from the manuscript
 using the test case
 ```
-run driver.py -i 1 -m lwir -s False
+run driver.py -i Ngarkat -m lwir -s False
 ```
 to get flag description 
 ```
 run driver.py -h
 ```
-`-i 1` is to run the test case
+`Ngarkat` is the data set provided with the code. 
+It can be downloaded at [XX](http://wwww.)
 
+the 'root' directory define in the config file  should look like this.
+.
+├── Data
+│   ├── FLIR570
+│   │   ├── MAT
+│   │   │   ├── > input data: frame_xxxxx.MAT
+...
+│   └── ignition_time.dat
+└── Postproc
+    ├── DEM
+    │   ├── corrected_terrain_simpleHomography.png
+    │   ├── Ngarkat_dem.txt
+    │   ├── ngarkat_ngarkat_dem.npy
+    │   ├── ngarkat_ngarkat_dem.png
+    │   └── Ngarkat_plotE_polygon.kml
+    ├── grid_ngarkat.npy
+    ├── grid_ngarkat.prj
+    ├── Instruments_Location
+    │   ├── cornerFireNames.txt
+    │   ├── Ngarkat_cf.txt
+    │   ├── Ngarkat_gcps.kml
+    │   └── Ngarkat_plotContour.kml
+    ├── LWIR
+    │   └── > output data processing 
+    └── OrthoData
+        └── > output final data
+
+The two first child 'Data/' and 'Postproc/' are named in the config file with variable 
+`root_data` and `root_postproc`
 
 ### Algo2 fromt the manuscript
 not set up for python3 yet
