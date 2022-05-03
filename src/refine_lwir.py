@@ -54,7 +54,6 @@ from sklearn.preprocessing import StandardScaler
 import importlib
 
 #homebrewed
-import agema
 import optris
 import flir
 
@@ -811,7 +810,6 @@ def filter_badLwirFrame(flag_parallel, mir_info, dir_out_mir_frame, dir_out_mir_
 #########################################
 if __name__ == '__main__':
 #########################################
-    importlib.reload(agema)
     importlib.reload(camera_tools)
     importlib.reload(tools)
     importlib.reload(spectralTools)
@@ -874,7 +872,7 @@ if __name__ == '__main__':
     params_rawData    = inputConfig.params_rawData
     params_georef     = inputConfig.params_georef
 
-    if 'flir' in params_lwir_camera['camera_name']: 
+    if 'agema' in params_lwir_camera['camera_name']: 
         import flir as camera
 
     elif 'optris' in params_lwir_camera['camera_name']:
@@ -2320,6 +2318,11 @@ if __name__ == '__main__':
         arrivalTime = np.load(dir_out_refine11+'arrivalTime_lowRes.npy') 
         #arrivalTime = np.load('/media/paugam/goulven/data/2014_SouthAfrica/Postproc/Shabeni1/LWIR301e/Georef_refined_new_SH/front_LN/shabeni1_arrivalTime_LN.npy')
    
+    
+    time_end_run = datetime.datetime.now()
+    print('')
+    print('---------')
+    print('cpu time elapse (h) = ', old_div((time_end_run - time_start_run).total_seconds(),3600))     
 
     '''
     #####################

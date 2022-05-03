@@ -1,5 +1,12 @@
 # OrthoIrCam
 
+
+<img src="data_static/img/msca.jpg"
+     alt="MSCA"
+     style="float: left; margin-right: 10px;display: block; max-width: 100px" />
+This code was developped within the [3DFireLab](https://3dfirelab.eu/) project, a project funded by the European Union’s Horizon 2020 research and innovation program under the Marie Skłodowska-Curie agreement, grant H2020-MSCA-IF-2019-892463. 
+
+
 ## Compilation
 If not alreday installed, install compilation tools. In Ubuntu for example,
 ```
@@ -7,7 +14,7 @@ sudo apt-get install build-essential
 ```
 For matplotlib plotting you also need some latex packages.
 ```
-sudo apt-get install dvipng texlive-latex-extra texlive-fonts-recommended cm-super
+sudo apt-get install dvipng texlive-latex-extra texlive-fonts-recommended cm-super texlive-math-extra
 ```
 Then, install an anaconda environment with the libraray listed in the yml file you can find [here](https://www.dropbox.com/s/b7j0iwsqd7295rh/AnacondaEnvMypy3Moritz.yml?dl=0)
 
@@ -29,16 +36,17 @@ Note that if you are not using the same config as in the above yml file, you mig
 
 ## Quick Description of the code
 code are in `src/`
-test data are in `data_test/`
-the whole process of orthorectification need to run in order:
+camera info are stored in `data_static/`
+input congifuration file are in `input_config/`
+The whole process of orthorectification need to run in this order:
 
-1. `driver.py` is Algo1
-1. `refine_lwir.py` is Algo2
-1. `ssim_prev4.py` is the filtering
-1. `plot_lwir_finalSelection.py`
-1. `get_ignition_line.py`
+1. `driver.py` is Algo1 
+1. `refine_lwir.py` is Algo2 
+1. `ssim_prev4.py` is the filtering 
+1. `plot_final_lwir.py`
 
-Follow description of each set:
+the three first steps are described in Paugam et al 2021.
+Follows a quick description of each steps:
 
 ### Algo1 from the manuscript
 using the test case

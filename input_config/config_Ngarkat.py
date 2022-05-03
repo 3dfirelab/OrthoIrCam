@@ -5,7 +5,7 @@ params_flag = {
              'flag_georef_mode' : 'SimpleHomography', #'WithTerrain' (not working) or 'SimpleHomography'
 
               #lwir
-              'flag_lwir_processRawData' : False,
+              'flag_lwir_processRawData' : True,
               'flag_lwir_plot_warp' :      True,
               'flag_lwir_georef' :      True,   
               'flag_lwir_plot_georef' : True,
@@ -19,17 +19,15 @@ params_flag = {
 
                }
 
-#params_rawData = {'root':           '/home/paugam/disc/EstrellaData/2008_Ngarkat/',
-#                  'root_data':      '/home/paugam/disc/EstrellaData/2008_Ngarkat/Data/',
-#                  'root_postproc' : '/home/paugam/disc/EstrellaData/2008_Ngarkat/Postproc/',
-params_rawData = {'root':           '/mnt/dataEstrella/2008_Ngarkat/',
-                  'root_data':      '/mnt/dataEstrella/2008_Ngarkat/Data/',
-                  'root_postproc' : '/mnt/dataEstrella/2008_Ngarkat/Postproc/',
+params_rawData = {'root':           '/home/paugam/disc/EstrellaData/2008_Ngarkat/',
+                  'root_data':      '/home/paugam/disc/EstrellaData/2008_Ngarkat/Data/',
+                  #'root_postproc' : '/home/paugam/2008_Ngarkat/Postproc/',
+                  'root_postproc' : '/home/paugam/disc/EstrellaData/2008_Ngarkat/Postproc_new/',
                   'plotname': 'ngarkat',
                   'fire_date'      : '2008-03-05',
                   
                   #lwir
-                  'root_data_DirLwir': '/LWIR3/MAT/all/',
+                  'root_data_DirLwir': '/FLIR570/MAT/',
                   'startTime_lwir' :  0,
                   'endTime_lwir'   :  320,
                   'period_lwir'    :  -1. , # seconds. set a negative value to use all frame
@@ -48,13 +46,15 @@ params_rawData = {'root':           '/mnt/dataEstrella/2008_Ngarkat/',
 
 params_gps = {  'dir_gps'      : 'Instruments_Location/',
                 #
-                'loc_cf_file'  : 'Ngarkat_cf.txt',
-                'cf_format'    : 'textFile_latlong', 
+                'cf_format'    : 'kml_latlong', 
+                'loc_cf_file'  : 'Ngarkat_gcps.kml',
+                'cf_feature_name'   : 'Ngarkat_gcps', 
+                'cornerFireName' : 'cornerFireNames.txt',
                 #
                 'loc_camera_file' : None,
                 #
-                'contour_file'               : 'Ngarkat_plotContour.kml', 
-                'contour_file_polygonName'   : 'Polygon', 
+                'contour_file'               : 'Ngarkat_plotContour_tuned.kml', 
+                'contour_feature_name'   : 'plotmask', 
                 'ctr_format'                 : 'kml_latlong', 
                 'contour_file_shrinkPlotMask': None, # (x2 grid_resolution) 
              }
@@ -69,13 +69,13 @@ params_lwir_camera={
             #driver.py
             ########
             'flag_costFunction' : 'EP08',
-            'camera_name' : 'flir570_10mm',
-            'cameraLens' : 25,
+            'camera_name' : 'agema570_certec',
+            'cameraLens' : 24,
             'cameraDimension' : [240, 320],
             #
-            'dir_input'      : 'LWIR3/',
+            'dir_input'      : 'LWIR33/',
             'dir_img_input'  : 'raw_data/npy/',
-            'dir_img_input_*': 'ngarkt_*.npy',
+            'dir_img_input_*': 'ngarkat_*.npy',
             # use in cornerFirePicker in driver.py to control fire cluster selection
             'temperature_threshold_cornerFirePicker': -999, 
             # param to convert theraml signal to uint8 img in optris.py
@@ -115,13 +115,13 @@ params_lwir_camera={
             'final_opti_threshold' : 0.,         # in manuscript: flag^ECC. >1 it switch-off ECC call, if ==0 it call it for every frame.
                                                  #                          0< <1 it calls ECC only if the relative diff of rho_corr to rho_corr_Ref is > to given value
             #
-            'frame2skip':[1091],
+            'frame2skip':[1081],
             
             #########
             #refined_lwir.py
             #########
             'ringPlot_refined': 250,
-            'reso_refined':4,
+            'reso_refined':2,
             'diskSize_refined': 30, # it was 30
             'diskSize_ssim_refined': 19,
             'igeostart_refined':0,
@@ -132,14 +132,12 @@ params_lwir_camera={
             'time_aheadOf_refined':0,
             'mask_burnNobun_type_refined': 'thr',  # methode used to compute the mask burnNoBurn that control part of the plot that was already burnt before the start of the monitoring
             'mask_burnNobun_type_val_refined': '12.0',
-               
-            'file_arrivalTime_lwir':'LWIR3/Georef_refined_SH/front_LN2_dx01/ngarkat_arrivaltTime.npy',
             
             #########
             #ssim_prev4.py
             #########
-            'final_selection_force2keep': [332,489,532,564,602,619,640,653,728],
-            'final_selection_4bin': [324,342,331,345,380,414,443,444,455,461,481,483,488,506,559,562,563,566,584,597,614,623,631,632,637,638,639,650,651,652,663,733,753,758,798,799,800,801,805,836,852,855,872,910,921,928,945,972,974,975,976,977,978],
+            'final_selection_force2keep': [265,504,506,851,1095],
+            'final_selection_4bin': [263,264,505,850,1082,1083,1084,1085,1086,1087,1088,1092,1093,1094,434,],
 
             'temperature_threshold_cornerFirePicker': 0,
             }
@@ -197,7 +195,7 @@ params_mir_camera={
 
 params_georef={
                 'dir_dem_input' : 'DEM/',
-                'dem_file' : 'ngarkt_dem.npy',
+                'dem_file' : 'ngarkat_ngarkat_dem.npy',
                 'run_opti' : True,
                 # lwir
                 'trange' : [22, 150],
@@ -208,10 +206,10 @@ params_georef={
                 '#frames_history_tail_visible' : 16,
                 # to activate corner fire tracking
                 'look4cf' : False,
-                'cornerFire_Temp_threshold' : 70,
+                'cornerFire_Temp_threshold' : -99,
                 # for CNN segmentation
-                'cnn_meanTemp':320,
-                'cnn_version':'v14',
+                'cnn_meanTemp':305,
+                'cnn_version':'v5',
                 #
                 'angle_prettyPlot':2.5,
                 }

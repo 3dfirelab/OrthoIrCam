@@ -161,7 +161,7 @@ if __name__ == '__main__':
     dir_out_warping    = dir_out + 'Warping/'
 
     if (runMode == 'lwir') & ('optris' in params_camera['camera_name'])  :   import optris as camera
-    if (runMode == 'lwir') & ('flir' in params_camera['camera_name'])    :   import flir as camera
+    if (runMode == 'lwir') & ('agema570' in params_camera['camera_name'])    :   import flir as camera
     if runMode == 'visible' :   import visible as camera
     
     importlib.reload(camera)
@@ -695,7 +695,7 @@ if __name__ == '__main__':
             ax = plt.subplot(131)
             if runMode == 'lwir':
                 vmin_ = np.nanpercentile(np.ma.filled(np.ma.masked_where(georef_temp_ref00<=0,georef_temp_ref00),np.nan), 20)
-                vmax_ = max([np.percentile(np.ma.masked_where(georef_temp_ref00<=0,georef_temp_ref00), 90), 320])
+                vmax_ = max([np.nanpercentile(np.ma.filled(np.ma.masked_where(georef_temp_ref00<=0,georef_temp_ref00),np.nan), 90), 320])
                 im = ax.imshow(np.ma.masked_where(georef_temp_ref00<=0,georef_temp_ref00).T,origin='lower',cmap=mpl.cm.inferno,vmin=vmin_,vmax=vmax_)
                 divider = make_axes_locatable(ax)
                 cbaxes = divider.append_axes("bottom", size="5%", pad=0.05)
@@ -847,9 +847,9 @@ if __name__ == '__main__':
     i_file = i_ref+1
     
     item=(0,0,-999,0,0,0,0,0)
-    info_loop = np.array( [item]*len(filenames), dtype=np.dtype([ ('time_igni',np.float),('inRef',np.int),('id',np.int),
-                                                                  ('corr_ref',np.float),('corr_ref00',np.float),('corr_ref00_init',np.float),
-                                                                  ('ep08_mask_size_around_plot',np.float), ('nbreCfTracked',np.float) ]) )
+    info_loop = np.array( [item]*len(filenames), dtype=np.dtype([ ('time_igni',float),('inRef',int),('id',int),
+                                                                  ('corr_ref',float),('corr_ref00',float),('corr_ref00_init',float),
+                                                                  ('ep08_mask_size_around_plot',float), ('nbreCfTracked',float) ]) )
     info_loop = info_loop.view(np.recarray)
     info_loop.id[i_ref]                         = frame_ref00.id 
     info_loop.inRef[i_ref]                      = 1
@@ -1007,7 +1007,7 @@ if __name__ == '__main__':
                     if  idx_plot[0].shape[0] > 4: 
                         gcps_frame_plot = cv2.perspectiveTransform( gcps_cam_plot, np.linalg.inv(frame.H2Ref) ) - old_div(frame.bufferZone,2)
                         
-                        gcps_frame_world_ = np.array( np.round( cv2.perspectiveTransform( gcps_cam_plot, frame_ref00_init.H2Grid), 0), dtype=np.int)
+                        gcps_frame_world_ = np.array( np.round( cv2.perspectiveTransform( gcps_cam_plot, frame_ref00_init.H2Grid), 0), dtype=int)
                         idx_ = (gcps_frame_world_[:,0,1], gcps_frame_world_[:,0,0])
                         gcps_frame_world  = np.vstack( (burnplot.grid_e[idx_], burnplot.grid_n[idx_], burnplot.terrain[idx_]) ).T
                 
@@ -1124,10 +1124,10 @@ if __name__ == '__main__':
             ax = plt.subplot(131)
             if frame.type == 'lwir':
                 if not(flag_georef_now):  _ , georef_img, georef_mask, georef_temp, georef_radiance = \
-                                                 np.load(dir_out_georef_npy+plotname+'_georef_{:06d}_{:s}.npy'.format(frame.id,georefMode)) 
+                                                 np.load(dir_out_georef_npy+plotname+'_georef_{:06d}_{:s}.npy'.format(frame.id,georefMode), allow_pickle=True) 
                 
-                vmin_ = np.nanpercentile( np.ma.filled(np.ma.masked_where(georef_temp<=0,georef_temp),np.nan), 20) 
-                vmax_ = max( [ np.percentile(np.ma.masked_where(georef_temp<=0,georef_temp), 90), 320])
+                vmin_ =        np.nanpercentile( np.ma.filled(np.ma.masked_where(georef_temp<=0,georef_temp),np.nan), 20) 
+                vmax_ =  max( [np.nanpercentile( np.ma.filled(np.ma.masked_where(georef_temp<=0,georef_temp),np.nan), 90), 320]) 
 
                 im = ax.imshow(np.ma.masked_where(georef_temp<=0,georef_temp).T,origin='lower',cmap=mpl.cm.inferno,vmin=vmin_,vmax=vmax_)
                 divider = make_axes_locatable(ax)
