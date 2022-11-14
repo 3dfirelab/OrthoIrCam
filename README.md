@@ -50,7 +50,9 @@ the three first steps are described in Paugam et al 2021.
 Follows a quick description of each steps:
 
 ### Algo1 from the manuscript
-using the test case
+A first algorigthm is aligning the images times series using on the first image that is manually georeference.
+No fix ground control point is required.
+Using the test case
 ```
 run driver.py -i Ngarkat -m lwir -s False
 ```
@@ -89,13 +91,20 @@ the 'root' directory define in the config file should look like this.
     └── OrthoData
         └── > output final data
 ```
+All files in Postproc directory are cretaed by the algorightm.
 The two first child 'Data/' and 'Postproc/' are named in the config file with variable 
 `root_data` and `root_postproc`
 
 ### Algo2 fromt the manuscript
-not set up for python3 yet
+A second algorithm loops again around the images time series focusing on area based alignement of the background scene.
+```
+run refine_lwir.py -i Ngarkat -s False
+```
 
 ### Filtering and ploting  
-not set up for python3 yet
+A last algorithm is applying filter to remove outilier images in the time series.
+```
+run ssim_prev4.py -i Ngarkat -s False
+```
 
 
