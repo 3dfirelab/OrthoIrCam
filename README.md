@@ -46,24 +46,14 @@ The whole process of orthorectification need to run in this order:
 1. `ssim_prev4.py` is the filtering 
 1. `plot_final_lwir.py`
 
-the three first steps are described in Paugam et al 2021.
-Follows a quick description of each steps:
+the three first steps are described in [Paugam et al 2021](https://doi.org/10.3390/rs13234913).
 
-### Algo1 from the manuscript
-A first algorigthm is aligning the images times series using on the first image that is manually georeference.
-No fix ground control point is required.
-Using the test case
-```
-run driver.py -i Ngarkat -m lwir -s False
-```
-to get flag description 
-```
-run driver.py -h
-```
+### Test Case 
 `Ngarkat` is the data set provided with the code. 
 It can be downloaded on the repository [dataverse.csuc.cat](https://doi.org/10.34810/data565)
 
 the 'root' directory define in the config file should look like this.
+Extracting the tar file form the above repository creates the Data directory and all sub directory.
 ```
 .
 ├── Data
@@ -91,20 +81,43 @@ the 'root' directory define in the config file should look like this.
     └── OrthoData
         └── > output final data
 ```
-All files in Postproc directory are cretaed by the algorightm.
-The two first child 'Data/' and 'Postproc/' are named in the config file with variable 
+All files in Postproc directory are cretaed by the algorightms described bellow.
+The two directorties 'Data/' and 'Postproc/' are named in the config file with variables 
 `root_data` and `root_postproc`
+Follows a quick description of each steps to run to perform the orthorectification.
 
-### Algo2 fromt the manuscript
+### Algo1 from the manuscript: `driver.py`
+A first algorigthm is aligning the images times series using on the first image that is manually georeference.
+No fix ground control poins are required.
+Using the test case
+```
+run driver.py -i Ngarkat -m lwir -s False
+```
+to get flag description 
+```
+run driver.py -h
+```
+
+### Algo2 from the manuscript: `refine_lwir.py`
 A second algorithm loops again around the images time series focusing on area based alignement of the background scene.
 ```
 run refine_lwir.py -i Ngarkat -s False
 ```
 
-### Filtering and ploting  
+### Filtering: `ssim_prev4.py`
 A last algorithm is applying filter to remove outilier images in the time series.
 ```
 run ssim_prev4.py -i Ngarkat -s False
 ```
 
+### plotting and saving
+A python script is plotting LWIR frames in png format as well as 
+creating a netcdf file with all frames.
+```
+run plot_final_lwir.py -i Ngarkat --angle 0
+```
+the `--angle` option is applying a rotation to the north-south orientated images in the png figure only if desired.
+
+example of the LWIR frames times series for the Ngarkat fire is shown below:
+[![LWIR Ngarkat](https://img.youtube.com/vi/StTqXEQ2l-Y/0.jpg)](https://www.youtube.com/watch?v=StTqXEQ2l-Y "LWIR Ngarkat LWIR")
 

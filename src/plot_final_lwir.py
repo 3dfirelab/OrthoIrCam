@@ -23,6 +23,7 @@ from PIL import Image, ImageDraw
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import importlib 
 from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 #homebrwed
 import spectralTools
@@ -338,12 +339,29 @@ if __name__ == '__main__':
                                    max([idx_plot[1].min()-buffer,0]):min([idx_plot[1].max()+buffer,temp_lwir.shape[1]])].T,
                                    origin='lower', cmap=mpl.cm.jet, 
                                    vmin=levels_lwirb.min(),vmax=levels_lwirb.max())
+        ax.annotate('t={:04.1f}s'.format(lwir_time[i_time]), (0.1,0.9), ha='left', va='top', transform=ax.transAxes)
         ax.set_axis_off()
+
+        ax.text(0.9,0.94, 't={: >8.2f}s'.format(lwir_time[i_time]), fontdict=dict(fontsize=14, fontweight='bold'), bbox=dict(facecolor='white', alpha=0.4, edgecolor='none'),transform=ax.transAxes)
+        
+        cbbox = inset_axes(ax, '15%', '90%', loc = 'center left')
+        [cbbox.spines[k].set_visible(False) for k in cbbox.spines]
+        cbbox.tick_params(axis='both', left=False, top=False, right=False, bottom=False, labelleft=False, labeltop=False, labelright=False, labelbottom=False)
+        cbbox.set_facecolor([1,1,1,0.5])
+
+        cbaxes = inset_axes(cbbox, '30%', '95%', loc = 6)
+        #cbaxes = fig.add_axes([0.05, .08, .4, .05])
+        ticks_levels_lwirb = [ r'${:.0f}$'.format(t) for t in levels_lwirb]
+        ticks_levels_lwirb[-1] = r'$>$'+ticks_levels_lwirb[-1]
+        cbar = fig.colorbar(im ,cax = cbaxes,orientation='vertical',ticks=levels_lwirb,)
+        cbar.ax.set_yticklabels(ticks_levels_lwirb)
+        cbar.set_label('LWIR BT (K)') 
+
+
         fig.savefig('{:s}{:s}_t_{:06d}_{:03d}s.png'.format(dir_out_combined+'LWIR/',plotname,time_sec,time_millisec))
         plt.close(fig)
 
-
-
+    '''
     #plot colorbar in seprated fig for lwir imshow
     mpl.rcdefaults()
     mpl.rcParams['text.usetex'] = True
@@ -369,7 +387,7 @@ if __name__ == '__main__':
     cbar.ax.set_xticklabels(ticks_levels_lwirb)
     fig.savefig('{:s}{:s}_colorbarLWIR.png'.format(dir_out_combined+'LWIR/',plotname))
     plt.close(fig)
-
+    '''
 
     #close file
     ncfile.close()
