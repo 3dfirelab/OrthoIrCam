@@ -121,5 +121,5 @@ the `--angle` option is applying a rotation to the north-south orientated images
 example of the LWIR frames times series for the Ngarkat fire is shown below:
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=bIaeLFx3yBM 
-" target="_blank"><img src="http://img.youtube.com/vi/bIaeLFx3yBM /0.jpg" 
+" target="_blank"><img src="http://img.youtube.com/vi/bIaeLFx3yBM/0.jpg" 
 alt="LWIR Ngarkat" width="480" height="360" border="10" /></a>
