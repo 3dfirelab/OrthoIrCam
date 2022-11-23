@@ -61,7 +61,7 @@ to get flag description
 run driver.py -h
 ```
 `Ngarkat` is the data set provided with the code. 
-It can be downloaded at [XX](http://wwww.)
+It can be downloaded on the repository [dataverse.csuc.cat](https://doi.org/10.34810/data565)
 
 the 'root' directory define in the config file should look like this.
 ```
