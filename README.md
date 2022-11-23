@@ -119,6 +119,7 @@ run plot_final_lwir.py -i Ngarkat --angle 0
 the `--angle` option is applying a rotation to the north-south orientated images in the png figure only if desired.
 
 example of the LWIR frames times series for the Ngarkat fire is shown below:
+
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=StTqXEQ2l-Y
 " target="_blank"><img src="http://img.youtube.com/vi/StTqXEQ2l-Y/0.jpg" 
-alt="LWIR Ngarkat" width="240" height="180" border="10" /></a>
+alt="LWIR Ngarkat" width="480" height="360" border="10" /></a>
