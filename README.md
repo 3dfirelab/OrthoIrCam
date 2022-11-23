@@ -1,5 +1,13 @@
 # OrthoIrCam
 
+
+## Funding
+<img src="data_static/img/msca.jpg"
+     alt="MSCA"
+     style="float: right; margin-left: 1rem; display: block; max-width: 50px" />
+This code was developped within the [3DFireLab](https://3dfirelab.eu/) project, a project funded by the European Union’s Horizon 2020 research and innovation program under the Marie Skłodowska-Curie agreement, grant H2020-MSCA-IF-2019-892463. 
+
+
 ## Compilation
 If not alreday installed, install compilation tools. In Ubuntu for example,
 ```
@@ -7,7 +15,7 @@ sudo apt-get install build-essential
 ```
 For matplotlib plotting you also need some latex packages.
 ```
-sudo apt-get install dvipng texlive-latex-extra texlive-fonts-recommended cm-super
+sudo apt-get install dvipng texlive-latex-extra texlive-fonts-recommended cm-super texlive-math-extra
 ```
 Then, install an anaconda environment with the libraray listed in the yml file you can find [here](https://www.dropbox.com/s/b7j0iwsqd7295rh/AnacondaEnvMypy3Moritz.yml?dl=0)
 
@@ -29,33 +37,74 @@ Note that if you are not using the same config as in the above yml file, you mig
 
 ## Quick Description of the code
 code are in `src/`
-test data are in `data_test/`
-the whole process of orthorectification need to run in order:
+camera info are stored in `data_static/`
+input congifuration file are in `input_config/`
+The whole process of orthorectification need to run in this order:
 
-1. `driver.py` is Algo1
-1. `refine_lwir.py` is Algo2
-1. `ssim_prev4.py` is the filtering
-1. `plot_lwir_finalSelection.py`
-1. `get_ignition_line.py`
+1. `driver.py` is Algo1 
+1. `refine_lwir.py` is Algo2 
+1. `ssim_prev4.py` is the filtering 
+1. `plot_final_lwir.py`
 
-Follow description of each set:
+the three first steps are described in Paugam et al 2021.
+Follows a quick description of each steps:
 
 ### Algo1 from the manuscript
-using the test case
+A first algorigthm is aligning the images times series using on the first image that is manually georeference.
+No fix ground control point is required.
+Using the test case
 ```
-run driver.py -i 1 -m lwir -s False
+run driver.py -i Ngarkat -m lwir -s False
 ```
 to get flag description 
 ```
 run driver.py -h
 ```
-`-i 1` is to run the test case
+`Ngarkat` is the data set provided with the code. 
+It can be downloaded at [XX](http://wwww.)
 
+the 'root' directory define in the config file should look like this.
+```
+.
+├── Data
+│   ├── FLIR570
+│   │   ├── MAT
+│   │   │   ├── > input data: frame_xxxxx.MAT
+...
+│   └── ignition_time.dat
+└── Postproc
+    ├── DEM
+    │   ├── corrected_terrain_simpleHomography.png
+    │   ├── Ngarkat_dem.txt
+    │   ├── ngarkat_ngarkat_dem.npy
+    │   ├── ngarkat_ngarkat_dem.png
+    │   └── Ngarkat_plotE_polygon.kml
+    ├── grid_ngarkat.npy
+    ├── grid_ngarkat.prj
+    ├── Instruments_Location
+    │   ├── cornerFireNames.txt
+    │   ├── Ngarkat_cf.txt
+    │   ├── Ngarkat_gcps.kml
+    │   └── Ngarkat_plotContour.kml
+    ├── LWIR
+    │   └── > output data processing 
+    └── OrthoData
+        └── > output final data
+```
+All files in Postproc directory are cretaed by the algorightm.
+The two first child 'Data/' and 'Postproc/' are named in the config file with variable 
+`root_data` and `root_postproc`
 
 ### Algo2 fromt the manuscript
-not set up for python3 yet
+A second algorithm loops again around the images time series focusing on area based alignement of the background scene.
+```
+run refine_lwir.py -i Ngarkat -s False
+```
 
 ### Filtering and ploting  
-not set up for python3 yet
+A last algorithm is applying filter to remove outilier images in the time series.
+```
+run ssim_prev4.py -i Ngarkat -s False
+```
 
 

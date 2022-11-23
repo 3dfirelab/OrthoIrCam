@@ -3941,7 +3941,7 @@ def group_consecutives(vals, step=1, vals_mask=None, flag_output='val'):
 
 
 ############################################
-def load_good_lwir_frame_selection(flag_restart, dir_out_npy, path_data, georefMode='SH'):
+def load_good_lwir_frame_selection(flag_restart, dir_out_npy, georefMode='SH'):
 
     if (not(os.path.isfile(dir_out_npy+'../lwir_time_info.npy'))) | (flag_restart == False):
         print('')
@@ -3975,9 +3975,9 @@ def load_good_lwir_frame_selection(flag_restart, dir_out_npy, path_data, georefM
         lwir_goeref = []
         for ii,lwir_goeref__ in enumerate(lwir_goeref_):
             try:
-                lwir_goeref.append( lwir_goeref__.replace('/media/paugam/goulven/data/', path_data) )
+                lwir_goeref.append( lwir_goeref__ )
             except:
-                lwir_goeref.append( lwir_goeref__.decode().replace('/media/paugam/goulven/data/', path_data) )
+                lwir_goeref.append( lwir_goeref__.decode() )
         lwir_goeref = np.array(lwir_goeref)
 
     print('done ')
