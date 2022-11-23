@@ -35,11 +35,11 @@ from matplotlib import _pylab_helpers
 from matplotlib.rcsetup import interactive_bk as _interactive_bk
 
 #homebrewed
-path_SrcPython = os.environ['PATH_SRC_PYTHON_LOCAL']
-sys.path.append(path_SrcPython+'/georefircam/src/')
+#path_SrcPython = os.environ['PATH_SRC_PYTHON_LOCAL']
+#sys.path.append(path_SrcPython+'/georefircam/src/')
 import hist_matching
 import tools_georefWithTerrain as georefWT
-sys.path.append(path_SrcPython+'/Factor_number/')
+sys.path.append('./Factor_number/')
 import factor
 
 #####################################################
@@ -416,6 +416,8 @@ def downgrade_resolution_4nadir(arr, diag_res_cte_shape, flag_interpolation='con
     factor = old_div(1.*arr.shape[0],diag_res_cte_shape[0])
     if factor == np.int(np.floor(factor)): factor = np.int(factor)
     else: factor = np.int(factor) + 1
+    #factor = int(np.round(old_div(1.*arr.shape[0],diag_res_cte_shape[0]),0))
+    
     if np.mod( arr.shape[0], factor )!=0:
         extra_pixel0 = factor-np.mod( arr.shape[0], factor )
         extra_pixel1 = factor-np.mod( arr.shape[1], factor )
@@ -433,7 +435,7 @@ def downgrade_resolution_4nadir(arr, diag_res_cte_shape, flag_interpolation='con
         grid_y = np.arange(0-np.int(0.5*extra_pixel1),extra_pixel1-int(0.5*extra_pixel1)+arr.shape[1],1) 
         arr = f(grid_x, grid_y)
         arr = arr.T
-
+    
     if flag_interpolation == 'max':
         return shrink_max(arr, diag_res_cte_shape[0], diag_res_cte_shape[1])
    
