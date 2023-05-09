@@ -162,6 +162,7 @@ if __name__ == '__main__':
 
     if (runMode == 'lwir') & ('optris' in params_camera['camera_name'])  :   import optris as camera
     if (runMode == 'lwir') & ('agema570' in params_camera['camera_name'])    :   import flir as camera
+    if (runMode == 'lwir') & ('xt' in params_camera['camera_name'])    :   import flir as camera
     if runMode == 'visible' :   import visible as camera
     
     importlib.reload(camera)
@@ -215,7 +216,7 @@ if __name__ == '__main__':
     wgs84 = osr.SpatialReference( ) # Define a SpatialReference object
     wgs84.ImportFromEPSG( 4326 ) # And set it to WGS84 using the EPSG code
     utm = osr.SpatialReference()
-    utm.SetWellKnownGeogCS( 'WGS84' )
+    #utm.SetWellKnownGeogCS( 'WGS84' )
     try: 
         centerpt = tools.get_center_Coord_ll(params_gps['ctr_format'], root_postproc+params_gps['dir_gps']+params_gps['contour_file'], params_gps)
     except: 
@@ -445,7 +446,7 @@ if __name__ == '__main__':
         print('need to define gcp location in ref image (location without buffer at the resolution of img)')
         print('saved in ', dir_out+'gcp_ref00_{:s}.pts'.format(os.path.basename(filenames[0]).split('.')[0]))
         frame_ref00 = camera.loadFrame(params_camera)
-        if runMode == 'lwir': frame_ref00.set_trange(params_georef['trange'])
+        #if runMode == 'lwir': frame_ref00.set_trange(params_georef['trange'])
         if runMode == 'visible': frame_ref00.set_trange([-999,-999])
         frame_ref00.init(0, None, *args_frame_ref00) 
         fig = plt.figure(figsize=(14,7))
@@ -460,7 +461,9 @@ if __name__ == '__main__':
             print('follow instruction in plot')
             img2plot = frame_ref00.temp[old_div(frame_ref00.bufferZone,2):old_div(-frame_ref00.bufferZone,2),  \
                                         old_div(frame_ref00.bufferZone,2):old_div(-frame_ref00.bufferZone,2)]
-            ax.imshow(img2plot.T, origin='lower',interpolation='nearest')
+            img2plot, _, _ = tools.get_gradient(img2plot)
+            #ax.imshow(img2plot.T, origin='lower',interpolation='nearest', vmax=460)
+            ax.imshow(img2plot.T, origin='lower',interpolation='nearest', vmax=300) #sycan19sg1
             
             line, = ax.plot([0],[0],linestyle='None', marker='+', color='r', markersize=20)
             #ax.set_xlim(0,nx-1)
@@ -530,7 +533,7 @@ if __name__ == '__main__':
     else: 
         print('')
         frame_ref00 = camera.loadFrame(params_camera)
-        if runMode == 'lwir': frame_ref00.set_trange(params_georef['trange'])
+        #if runMode == 'lwir': frame_ref00.set_trange(params_georef['trange'])
         if runMode == 'visible': frame_ref00.set_trange([-999,-999])
         frame_ref00.init(0, None, *args_frame_ref00)
         ni, nj = frame_ref00.ni, frame_ref00.nj
@@ -948,7 +951,7 @@ if __name__ == '__main__':
                 break
             flag_frame_created = True
             frame = camera.loadFrame(params_camera)
-            if runMode == 'lwir': frame.set_trange(params_georef['trange'])
+            #if runMode == 'lwir': frame.set_trange(params_georef['trange'])
             if runMode == 'visible': frame.set_trange([-999,-999])
             frame.init(i_file, frame_ref00, *args_frame)
             if runMode == 'visible': frame.save_backgrdimg(frame_ref00_init.backgrdimg, frame_ref00_init.mask_backgrdimg )

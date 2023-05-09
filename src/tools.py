@@ -680,8 +680,8 @@ def load_loc_cornerFire(root_postproc, params_gps, conv_ll2utm, cornerFireName='
         cf_names = np.array([line.rstrip() for line in f.readlines()])
         f.close()
         pts = load_polygon_from_kml(root_postproc+dir_gps+cf_file, params_gps['cf_feature_name'])
-        cf_gps_ll  = np.zeros([3,len(pts)])
-        cf_gps_utm = np.zeros([3,len(pts)])
+        cf_gps_ll  = np.zeros([3,len(cf_names)])
+        cf_gps_utm = np.zeros([3,len(cf_names)])
         
         pts_name = np.array([ pt[0] for pt in pts])
         for icf, cf_name in enumerate(cf_names):
@@ -739,7 +739,6 @@ def get_center_Coord_ll(flag_format, contour_file, params_gps=None):
     elif flag_format.split('_')[0] == 'kml':
         pts = load_polygon_from_kml(contour_file,params_gps['contour_feature_name'])
         center   = [pts[0,:].mean(), pts[1,:].mean()]
-
     return center
 
 
@@ -1928,10 +1927,10 @@ def get_EP08(frame, frame_ref, inputMask_function=mask_EP08, inputMask_param=[1.
 
 
     if frame.type == 'lwir':
-        img     = cv2.warpPerspective(frame.temp, frame.H2Ref,                                \
+        img     = cv2.warpPerspective(frame.templn, frame.H2Ref,                                \
                                       (frame.nj+frame.bufferZone,frame.ni+frame.bufferZone),\
                                       flags=cv2.INTER_LINEAR                      )
-        img_ref = cv2.warpPerspective(frame_ref.temp, frame_ref.H2Ref,                                          \
+        img_ref = cv2.warpPerspective(frame_ref.templn, frame_ref.H2Ref,                                          \
                                       (frame_ref.nj+frame_ref.bufferZone,frame_ref.ni+frame_ref.bufferZone),\
                                       flags=cv2.INTER_LINEAR                                          ) 
     else: 
@@ -2243,11 +2242,15 @@ def plume_mask(frame, force=False):
 
 #########################################
 def local_normalization(img, mask, diskSize=30):
-
+    
+    if img.dtype == float: 
+        tmp_ = (img/img.max() * 2) - 1
+    else:
+        tmp_ = img
     selem = skimage.morphology.disk(diskSize)
-    img_eq = skimage.filters.rank.equalize(img, selem=selem, mask=mask)
+    img_eq = skimage.filters.rank.equalize(tmp_, footprint=selem, mask=mask)
 
-    return np.float32(old_div(img_eq,6.e4) )
+    return np.float32(old_div(img_eq,255) )
 
 
 #####################################################
@@ -2506,7 +2509,7 @@ def load_polygon_from_kml(kml_file,polygon_name):
     
     with open(kml_file, 'rt') as myfile:
         doc=myfile.read().encode('utf-8')
-
+   
     k = kml.KML()
     k.from_string(doc)
 
@@ -2785,7 +2788,7 @@ def get_best_plane(xs,ys,zs, flag_plot=False, dir_out=None, dimension=None, mask
     '''
     if flag_plot: 
         tresh = np.array(np.where(maskPlot==2,255,0),dtype=np.uint8)
-        image, contours, hierarchy = cv2.findContours(tresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+        contours, hierarchy = cv2.findContours(tresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
         polygon =[ tuple( [pt[0][1],pt[0][0]] ) for pt in contours[0] ]
         img = Image.new('L', maskPlot.shape , 0)
         ImageDraw.Draw(img).polygon(polygon, 0, 1)
@@ -3120,7 +3123,7 @@ def apply_translation_img(warp, mask, trans_vec, ref, mask_ref, communArea_limit
 def findTransformECC_on_prev_frame(flag, frame, frame_ref, trans_len_limit=[80,40], ep08_limit=[.7,.6], mask_func=mask_EP08, mask_func_param=[1.e6,0]):
         
     criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 1000,  1e-4)
-    selected_field = 'temp' if frame.type=='lwir' else 'img'
+    selected_field = 'templn' if frame.type=='lwir' else 'img'
 
     frame_ref_temp = cv2.warpPerspective(getattr(frame_ref,selected_field), frame_ref.H2Ref, frame.img.shape[::-1], flags=cv2.INTER_LINEAR )  
     frame_mask_warp, frame_ref_mask = mask_func( frame, frame_ref, kernel_warp=frame.kernel_warp, kernel_plot=frame.kernel_plot, 
@@ -3308,6 +3311,7 @@ def findTransformECC_on_prev_frame(flag, frame, frame_ref, trans_len_limit=[80,4
     warp_matrix3_init = np.array(np.linalg.inv(frame.H2Ref),dtype=np.float32)
 
     try:
+        pdb.set_trace()
         (cc, warp_matrix3) = cv2.findTransformECC(frame_ref_temp, getattr(frame,selected_field), warp_matrix3_init,  cv2.MOTION_HOMOGRAPHY, criteria, 
                                                   inputMask    = np.array(frame_mask_img,dtype=np.uint8) , 
                                                   templateMask = np.array(frame_ref_mask,dtype=np.uint8) )
@@ -3345,7 +3349,7 @@ def findTransformECC_on_ref_frame(flag, frame_in, frame_ref, trans_len_limit=[80
     
     frame = frame_in.copy()
     criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 1000,  1e-4)
-    selected_field = 'temp' if frame.type=='lwir' else 'img'
+    selected_field = 'templn' if frame.type=='lwir' else 'img'
 
     frame_ref_temp = cv2.warpPerspective(getattr(frame_ref,selected_field) ,     frame_ref.H2Ref, frame.img.shape[::-1], flags=cv2.INTER_LINEAR )  
 
@@ -3394,7 +3398,7 @@ def findTransformECC_on_ref_frame(flag, frame_in, frame_ref, trans_len_limit=[80
                             continue
                     info_[ivec, :2] = vec
                     info_[ivec, 2:] = apply_translation_img( temp0_coarse, mask0_coarse, vec, temp_ref_coarse, mask_ref_coarse )
-              
+                
                 #if info_[:,2].max() > .8*ep08_limit[0]:
                 #    idx_  = np.where(info_[:,2] >= .9* info_[:,2].max()) #first get the vec with corr > 90% of the max
                 #    idx2_ = idx_[0][info_[ idx_[0][ np.where( info_[idx_[0],3] == info_[idx_,3].max()) ], 2].argmax()] # then get the vec that have max match and get max corr on those
@@ -3414,7 +3418,7 @@ def findTransformECC_on_ref_frame(flag, frame_in, frame_ref, trans_len_limit=[80
             warp_matrix1_[:,-1] = trans_vec * res_factor
             warp_matrix1 = np.eye(3, 3, dtype=np.float32)
             warp_matrix1[:2,:] = warp_matrix1_
-           
+          
             frame_ = frame.copy()
             frame_.set_homography_to_ref( frame_.H2Ref.dot(warp_matrix1) )
             frame_.set_warp(     cv2.warpPerspective(frame.img,      frame_.H2Ref, frame.img.shape[::-1], flags=cv2.INTER_LINEAR ))
@@ -3467,7 +3471,7 @@ def findTransformECC_on_ref_frame(flag, frame_in, frame_ref, trans_len_limit=[80
                             continue
                     info_[ivec, :2] = vec
                     info_[ivec, 2:] = apply_translation_img( temp1, mask1, vec, frame_ref_temp, frame_ref_mask )
-                
+                    #print(vec, info_[ivec, 2:],trans_len, trans_len_limit[1] ) 
                 #idx_ = np.where(info_[:,2] >= .8* info_[:,2].max())
                 #idx2_ = idx_[0][info_[ idx_[0][ np.where( info_[idx_[0],3] == info_[idx_,3].max()) ], 2].argmax()] 
                 #if info_[:,2].max() > .8*ep08_limit[0]:

@@ -155,11 +155,15 @@ class loadFrame(object):
        
         self.temp           = temp 
         self.imgRaw         = convert_2_uint8(tempRaw)
-        
+       
         #self.mask_img = mask_helico_leg(self)
         self.mask_img = np.zeros_like(temp) 
         self.mask_img[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)] = 1
-                
+        
+        if 'diskSize_driver_px' in inputConfig.params_lwir_camera.keys(): 
+            diskSize     = inputConfig.params_lwir_camera['diskSize_driver_px']
+            self.templn  = tools.local_normalization(self.temp, self.mask_img, diskSize=diskSize)
+
 
         if feature_params is not None:
         
@@ -172,12 +176,12 @@ class loadFrame(object):
                                                   finish='None') )'''
          
             clahe = cv2.createCLAHE(clipLimit=self.clahe_clipLimit, tileGridSize=(10,10)) # sha3
-            temp_max_arr = np.arange(self.temp[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)].min()+10,
-                                     self.temp[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)].min()+70,1)
+            temp_max_arr = np.arange(np.percentile(self.temp[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)],1)+5,
+                                     np.percentile(self.temp[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)],1)+70,1)
             feature_nbre = np.zeros_like(temp_max_arr)
             for ii, temp_max in enumerate(temp_max_arr):
                 img = clahe.apply(convert_2_uint8(self.temp[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)],
-                                                  trange=(self.temp[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)].min(),temp_max)
+                                                  trange=(np.percentile(self.temp[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)],1),temp_max)
                                                  ))
                 p00      = cv2.goodFeaturesToTrack(img,      mask = None, **feature_params)
                 try: 
@@ -185,14 +189,15 @@ class loadFrame(object):
                 except: 
                     pass
             #self.set_trange((29,47))
-            idx_ = np.where(feature_nbre == feature_nbre.max())
+            idx_ = np.where(feature_nbre > feature_nbre.max()*.8)
             idx_ = idx_[0].max()
-            self.set_trange((self.temp[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)].min(),temp_max_arr[idx_]))
+            #self.set_trange((np.percentile(self.temp[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)],1),temp_max_arr[idx_]))
+            self.set_trange((np.percentile(self.temp[old_div(self.bufferZone,2):old_div(-self.bufferZone,2),old_div(self.bufferZone,2):old_div(-self.bufferZone,2)],1),330))
             self.set_img()
             self.set_feature(feature_params)
-        
+            
             self.blurred = False
-            # check fro blurry image
+            # check fro blurry imageimg_
             #idx = np.where( flag_blur.filename == os.path.basename(filenames[id_file]))
             #self.blurred = True if flag_blur.blurred[idx] == 'yes' else False
         
@@ -209,7 +214,6 @@ class loadFrame(object):
         clahe = cv2.createCLAHE(clipLimit=self.clahe_clipLimit, tileGridSize=(10,10)) # sha3
 
         self.img = clahe.apply(img_)
-            
         if 'trange2' in self.__dict__: 
             img_            = convert_2_uint8(self.temp, self.trange2)
             clahe = cv2.createCLAHE(clipLimit=self.clahe_clipLimit, tileGridSize=(10,10)) 
@@ -469,6 +473,11 @@ class loadFrame(object):
         setattr(nctemp, 'standard_name', 'temp') 
         setattr(nctemp, 'units', 'C') 
         
+        nctempln    = ncfile.createVariable('templn','float32', (u'imgi',u'imgj',), fill_value=0.)
+        setattr(nctempln, 'long_name', 'undistorted local normalized temperature') 
+        setattr(nctempln, 'standard_name', 'templn') 
+        setattr(nctempln, 'units', '-') 
+        
         ncwarp    = ncfile.createVariable('warp','uint8', (u'imgi',u'imgj',), fill_value=0.)
         setattr(ncwarp, 'long_name', 'warp of gray image on ref frame') 
         setattr(ncwarp, 'standard_name', 'warp') 
@@ -577,6 +586,7 @@ class loadFrame(object):
         if 'img'                 in self.__dict__: ncimg[:,:]        = self.img
         if 'mask_img'            in self.__dict__: ncmask_img[:,:]   = self.mask_img
         if 'temp'                in self.__dict__: nctemp[:,:]        = self.temp
+        if 'templn'              in self.__dict__: nctempln[:,:]        = self.templn
         if 'warp'                in self.__dict__: ncwarp[:,:]       = self.warp
         if 'mask_warp'           in self.__dict__: ncmask_warp[:,:]  = self.mask_warp
         if 'plotMask_withBuffer' in self.__dict__: ncplotMask[:,:]   = self.plotMask_withBuffer
@@ -683,6 +693,7 @@ class loadFrame(object):
         self.bareGroundMask_withBuffer = np.ma.filled(ncfile.variables['bareGroundMask'][:,:])
         if 'mask_img'  in ncfile.variables : self.mask_img         = np.ma.filled(ncfile.variables['mask_img'][:,:])
         if 'temp'      in ncfile.variables : self.temp             = np.ma.filled(ncfile.variables['temp'][:,:])
+        if 'templn'    in ncfile.variables : self.templn             = np.ma.filled(ncfile.variables['templn'][:,:])
         if 'ssim'      in ncfile.variables : self.ssim_2d          = np.ma.filled(ncfile.variables['ssim'][:,:])
         if 'mask_ssim' in ncfile.variables : self.mask_ssim        = np.ma.filled(ncfile.variables['mask_ssim'][:,:])
 
@@ -1472,8 +1483,13 @@ def mask_helico_leg(frame_in,\
 def read_flir(filename):
     key = os.path.basename(filename).split('.')[0]
     data = io.loadmat(filename)
-    frame     = data['{:s}'.format(key)][::-1].T # K
-    time_info = data['{:s}_DateTime'.format(key)][0]
+    try: 
+        frame     = data['{:s}'.format(key)][::-1].T # K
+        time_info = data['{:s}_DateTime'.format(key)][0]
+    except: 
+        frame     = data['Frame'][::-1].T # C
+        time_info = data['File_DateTime'][0]
+    
     time = datetime.datetime.strptime('{:04.0f}-{:02.0f}-{:02.0f}_{:02.0f}:{:02.0f}:{:02.0f}:{:03.0f}'.format(*time_info),"%Y-%m-%d_%H:%M:%S:%f")
     return time, frame
 
@@ -1492,7 +1508,10 @@ def plot_flir(rad,time_date,time_igni,dir_out,filename):
     mpl.rcParams['figure.subplot.wspace'] = 0.1
 
     vmin =  290
-    vmax =  500
+    if rad.max()<500: 
+        vmax = rad.max()
+    else:
+        vmax =  500
     fig = plt.figure(2)
     ax = plt.subplot(111)
     im = ax.imshow(rad.T,origin='lower',interpolation='nearest',vmin = vmin, vmax = vmax)
@@ -1502,7 +1521,7 @@ def plot_flir(rad,time_date,time_igni,dir_out,filename):
     cbar.set_label('L (W/m2/sr)')
     ax.set_axis_off()
     ax.set_title(time_date.strftime('%Y-%m-%d_%H:%M:%S:%f') + '   since igni = {:.2f} s'.format(time_igni) )
-
+    
     tmp = os.path.basename(filename)
     fig.savefig(dir_out+tmp+'.png')
     plt.close(fig)
@@ -1551,6 +1570,8 @@ def processRawData(ignitionTime,params, params_camera, flag_restart):
     
     #get index
     filenames_ = sorted(glob.glob(dir_in+'*.MAT'))
+    if len(filenames_)==0:
+        filenames_ = sorted(glob.glob(dir_in+'*.mat'))
     filenames = np.array(len(filenames_)*[('mm',0,0)],dtype=np.dtype([('name','U500'),('idx1',np.int),('idx2',np.int)])) 
     filenames = filenames.view(np.recarray)
     filenames.name = filenames_
@@ -1572,12 +1593,19 @@ def processRawData(ignitionTime,params, params_camera, flag_restart):
         camera_name = params_camera['camera_name']
         srf_file = '../data_static/Camera/'+camera_name.split('_')[0]+'/SpectralResponseFunction/'+camera_name.split('_')[0]+'.txt'
         wavelength_resolution = 0.01
+        param_set_temperature = spectralTools.get_tabulated_TT_Rad(srf_file, wavelength_resolution)
+        
         for ifile, (filename, _, _) in enumerate(np.sort(filenames,order=['idx1','idx2'])): #[0::int(params['period_lwir'])]) :
             
             if filename == 'mm': continue
 
             #load_file
-            time_date, flir_temp = read_flir(filename)
+            time_date, flir_reading = read_flir(filename)
+            if params_camera['load_radiance']:
+                flir_temp = spectralTools.conv_Rad2Temp(flir_reading, param_set_temperature)
+            else:
+                flir_temp = flir_reading + 273.14
+
             time_igni = (time_date-ignitionTime).total_seconds() - delta_t_lwir_mir
 
             #flir_rad = spectralTools.conv_temp2Rad(flir_temp, srf_file, wavelength_resolution=wavelength_resolution)
