@@ -22,7 +22,7 @@ params_flag = {
 params_rawData = {'root':           '/home/paugam/disc/EstrellaData/2008_Ngarkat/',
                   'root_data':      '/home/paugam/disc/EstrellaData/2008_Ngarkat/Data/',
                   #'root_postproc' : '/home/paugam/2008_Ngarkat/Postproc/',
-                  'root_postproc' : '/home/paugam/disc/EstrellaData/2008_Ngarkat/Postproc_new/',
+                  'root_postproc' : '/home/paugam/disc/EstrellaData/2008_Ngarkat/Postproc/',
                   'plotname': 'ngarkat',
                   'fire_date'      : '2008-03-05',
                   
