@@ -1249,7 +1249,7 @@ def get_feature(frame, feature_params):
 
 #################################################
 def convert_2_uint8(x,trange=None,flag_sqrtScale=True):
-    x = np.array(x,dtype=np.float)
+    x = np.array(x,dtype=float)
     if  trange is None: 
         xmin, xmax = x.min(), x.max()
     else:
@@ -1572,7 +1572,7 @@ def processRawData(ignitionTime,params, params_camera, flag_restart):
     filenames_ = sorted(glob.glob(dir_in+'*.MAT'))
     if len(filenames_)==0:
         filenames_ = sorted(glob.glob(dir_in+'*.mat'))
-    filenames = np.array(len(filenames_)*[('mm',0,0)],dtype=np.dtype([('name','U500'),('idx1',np.int),('idx2',np.int)])) 
+    filenames = np.array(len(filenames_)*[('mm',0,0)],dtype=np.dtype([('name','U500'),('idx1',int),('idx2',int)])) 
     filenames = filenames.view(np.recarray)
     filenames.name = filenames_
     for ifile, filename in enumerate(filenames.name):
@@ -1580,7 +1580,7 @@ def processRawData(ignitionTime,params, params_camera, flag_restart):
         filenames.idx2[ifile] = int(os.path.basename(filename).split('.')[0].split('_')[1])
     
 
-    out_time =  np.array(len(filenames_)*[('mm',0)],dtype=np.dtype([('name','U500'),('time',np.float)]))
+    out_time =  np.array(len(filenames_)*[('mm',0)],dtype=np.dtype([('name','U500'),('time',float)]))
     out_time = out_time.view(np.recarray)
 
     #save npy

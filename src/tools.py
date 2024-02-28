@@ -154,7 +154,7 @@ def create_grid(root_postproc, fireName,
 
             # polygon = [(x1,y1),(x2,y2),...] or [x1,y1,x2,y2,...]
             width, height = plotmask.shape
-            polygon =[ tuple( np.array(np.round(old_div((np.array(pt)-np.array(center)),resolution),0) + .5*np.array([width, height]),dtype=np.int) ) for pt in pts_utm ]
+            polygon =[ tuple( np.array(np.round(old_div((np.array(pt)-np.array(center)),resolution),0) + .5*np.array([width, height]),dtype=int) ) for pt in pts_utm ]
 
             img = Image.new('L', (width, height), 0)
             ImageDraw.Draw(img).polygon(polygon, outline=i+1, fill=i+1)
@@ -178,7 +178,7 @@ def create_grid(root_postproc, fireName,
                     pts_utm.append(list(conv_ll2utm.TransformPoint(*pt[::-1])[:2]))
                 # polygon = [(x1,y1),(x2,y2),...] or [x1,y1,x2,y2,...]
                 width, height = plotmask.shape
-                polygon_ =[ tuple( np.array(np.round(old_div((np.array(pt)-np.array(center)),resolution),0) + .5*np.array([width, height]),dtype=np.int) ) for pt in pts_utm ]
+                polygon_ =[ tuple( np.array(np.round(old_div((np.array(pt)-np.array(center)),resolution),0) + .5*np.array([width, height]),dtype=int) ) for pt in pts_utm ]
                 [polygon.append(polygon_[i]) for i in range(len(polygon_))]
             img = Image.new('L', (width, height), 0)
             ImageDraw.Draw(img).polygon(polygon, outline=i+1, fill=i+1)
@@ -209,7 +209,7 @@ def create_grid(root_postproc, fireName,
         pts_utm_list = []
         for ii in range(pts_utm3D.shape[1]):
             pts_utm_list.append((pts_utm3D[:,ii]).tolist())
-        #polygon =[ tuple( np.array(np.round((np.array(pt[:2])-np.array(center))/resolution,0) + .5*np.array([width, height]),dtype=np.int) ) for pt in pts_utm_list ]
+        #polygon =[ tuple( np.array(np.round((np.array(pt[:2])-np.array(center))/resolution,0) + .5*np.array([width, height]),dtype=int) ) for pt in pts_utm_list ]
     
         polygon = []
         for pt in pts_utm_list:
@@ -233,7 +233,7 @@ def create_grid(root_postproc, fireName,
 
         # polygon = [(x1,y1),(x2,y2),...] or [x1,y1,x2,y2,...]
         width, height = grid_e.shape
-        polygon =[ tuple( np.array(np.round(old_div((np.array(pt)-np.array(center)),resolution),0) + .5*np.array([width, height]),dtype=np.int) ) for pt in pts_utm ]
+        polygon =[ tuple( np.array(np.round(old_div((np.array(pt)-np.array(center)),resolution),0) + .5*np.array([width, height]),dtype=int) ) for pt in pts_utm ]
 
         img = Image.new('L', (width, height), 0)
         ImageDraw.Draw(img).polygon(polygon, outline=2, fill=2)
@@ -414,8 +414,8 @@ def downgrade_resolution_4nadir(arr, diag_res_cte_shape, flag_interpolation='con
     flag_interpolation is conservative, or use max value in the new grid box
     '''
     factor = old_div(1.*arr.shape[0],diag_res_cte_shape[0])
-    if factor == np.int(np.floor(factor)): factor = np.int(factor)
-    else: factor = np.int(factor) + 1
+    if factor == int(np.floor(factor)): factor = int(factor)
+    else: factor = int(factor) + 1
     #factor = int(np.round(old_div(1.*arr.shape[0],diag_res_cte_shape[0]),0))
     
     if np.mod( arr.shape[0], factor )!=0:
@@ -431,8 +431,8 @@ def downgrade_resolution_4nadir(arr, diag_res_cte_shape, flag_interpolation='con
         z = arr.flatten()
         f = interpolate.interp2d(x, y, z, kind='linear')
         
-        grid_x = np.arange(0-np.int(0.5*extra_pixel0),extra_pixel0-int(0.5*extra_pixel0)+arr.shape[0],1)
-        grid_y = np.arange(0-np.int(0.5*extra_pixel1),extra_pixel1-int(0.5*extra_pixel1)+arr.shape[1],1) 
+        grid_x = np.arange(0-int(0.5*extra_pixel0),extra_pixel0-int(0.5*extra_pixel0)+arr.shape[0],1)
+        grid_y = np.arange(0-int(0.5*extra_pixel1),extra_pixel1-int(0.5*extra_pixel1)+arr.shape[1],1) 
         arr = f(grid_x, grid_y)
         arr = arr.T
     
@@ -1243,8 +1243,11 @@ def warp_frame(camera, params_camera, params_georef, frame_in, framesID_ref,
     good_old = np.array(df_old)
     good_new = np.array(df_new)
 
-    if (len(good_new)!=0)  & (len(good_old)!=0):
-        H_new, _ = cv2.findHomography(good_new, good_old, cv2.RANSAC,5.0)
+    if (len(good_new)>=4)  & (len(good_old)>=4):
+        try:
+            H_new, _ = cv2.findHomography(good_new, good_old, cv2.RANSAC,5.0)
+        except: 
+            pdb.set_trace()
     else:
         frame.set_correlation(0., 0., 0., 0.)
         return frame, [None, None]
@@ -1622,7 +1625,7 @@ def get_matching_feature_opticalFlow(frame, frame_ref, params_camera, lk_params,
 
     #set point on that are out on the edge so that they are remove when checking if in the ring or not
     try:
-        idx_ = np.array(np.round(p1_good_on_ref00,0),dtype=np.int)
+        idx_ = np.array(np.round(p1_good_on_ref00,0),dtype=int)
         idx_[:,0,1] = np.where(idx_[:,0,1]<0,0,idx_[:,0,1])
         idx_[:,0,1] = np.where(idx_[:,0,1]>nx-1,nx-1,idx_[:,0,1])
         idx_[:,0,0] = np.where(idx_[:,0,0]<0,0,idx_[:,0,0])
@@ -2247,6 +2250,9 @@ def local_normalization(img, mask, diskSize=30):
         tmp_ = (img/img.max() * 2) - 1
     else:
         tmp_ = img
+    
+    tmp_ = skimage.util.img_as_ubyte(tmp_)
+
     selem = skimage.morphology.disk(diskSize)
     img_eq = skimage.filters.rank.equalize(tmp_, footprint=selem, mask=mask)
 
@@ -2291,7 +2297,7 @@ def runningAverageNeighborPixels_withMask(data,mask,winsize):
     '''
 
     def func(values,data,mask):
-        idx = np.unravel_index(np.array(values[np.where(values>=0)],dtype=np.int),data.shape)
+        idx = np.unravel_index(np.array(values[np.where(values>=0)],dtype=int),data.shape)
         if len(idx[0])==0: return -999
         data_ = data[idx]
         mask_ = mask[idx]
@@ -2532,7 +2538,10 @@ def load_polygon_from_kml(kml_file,polygon_name):
 
     else:
         polygon = features[i_feature].geometry
-        pts = polygon.exterior.coords.xy
+        try:
+            pts = np.dstack(polygon.exterior.coords)[0][:2,:]
+        except:
+            pdb.set_trace()
     
         return np.dstack(pts)[0].T
 
@@ -2620,7 +2629,7 @@ def get_stat_info_cluster(gcps_img, frame, frame_ref00, params_georef):
     #plt.show()
 
     for icf in range(gcps_img.shape[0]):
-        gcp =  np.array(np.round(gcps_img[icf,:],0),dtype=np.int)
+        gcp =  np.array(np.round(gcps_img[icf,:],0),dtype=int)
         if (gcp[0] > old_div(frame.bufferZone,2)) & (gcp[0] < frame.img.shape[1]-old_div(frame.bufferZone,2)) & \
            (gcp[1] > old_div(frame.bufferZone,2)) & (gcp[1] < frame.img.shape[0]-old_div(frame.bufferZone,2))   : 
                
@@ -3071,7 +3080,7 @@ def set_frame_gcps(frame, framesID_ref,
 
         #get world locatoin of feature_on_ref
         pts_img_xyz_map_ref   = np.load( wkdir+'frame{:06d}_2d23d.npy'.format(frame_ref.id) )   
-        idx = np.array(feature_on_ref-old_div(frame.bufferZone,2),dtype=np.int)
+        idx = np.array(feature_on_ref-old_div(frame.bufferZone,2),dtype=int)
         world_on_ref = pts_img_xyz_map_ref[idx[:,1],idx[:,0],:]
 
         for (feature, pt)  in zip(feature_on_frame,world_on_ref):
@@ -3311,7 +3320,6 @@ def findTransformECC_on_prev_frame(flag, frame, frame_ref, trans_len_limit=[80,4
     warp_matrix3_init = np.array(np.linalg.inv(frame.H2Ref),dtype=np.float32)
 
     try:
-        pdb.set_trace()
         (cc, warp_matrix3) = cv2.findTransformECC(frame_ref_temp, getattr(frame,selected_field), warp_matrix3_init,  cv2.MOTION_HOMOGRAPHY, criteria, 
                                                   inputMask    = np.array(frame_mask_img,dtype=np.uint8) , 
                                                   templateMask = np.array(frame_ref_mask,dtype=np.uint8) )
@@ -3622,8 +3630,8 @@ def get_covergaeOfExtendedMaskPlot(frame,inputConfig,delatationKernel=81):
     '''
     this is a measure of how much the warped image is covering the plot and the aera around it
     '''
-    if frame.type == 'visible': delatationKernel_ = old_div(np.int(old_div(delatationKernel,inputConfig.params_vis_camera['shrink_factor'])),2) * 2 + 1
-    else:                       delatationKernel_ = old_div(np.int(delatationKernel                                               ),2) * 2 + 1
+    if frame.type == 'visible': delatationKernel_ = old_div(int(old_div(delatationKernel,inputConfig.params_vis_camera['shrink_factor'])),2) * 2 + 1
+    else:                       delatationKernel_ = old_div(int(delatationKernel                                               ),2) * 2 + 1
     kernel = np.ones((delatationKernel_,delatationKernel_),np.uint8)
     mask_plot = np.where( (frame.plotMask_withBuffer ==2), np.ones_like(frame.warp), np.zeros_like(frame.warp) )
     img_ = np.array(mask_plot,dtype=np.uint8)*255
@@ -3967,7 +3975,7 @@ def load_good_lwir_frame_selection(flag_restart, dir_out_npy, georefMode='SH'):
             lwir_id.append( id_lwir)
        
         lwir_time = np.array(lwir_time)
-        lwir_id = np.array(lwir_id,dtype=np.int)    
+        lwir_id = np.array(lwir_id,dtype=int)    
 
         np.save(dir_out_npy+'../lwir_time_info.npy',[lwir_time,lwir_id])
         np.save(dir_out_npy+'../lwir_selection_filename.npy',lwir_goeref)  
@@ -3986,7 +3994,7 @@ def load_good_lwir_frame_selection(flag_restart, dir_out_npy, georefMode='SH'):
 
     print('done ')
 
-    return np.array(lwir_id,dtype=np.int), np.array(lwir_time), np.array(lwir_goeref)
+    return np.array(lwir_id,dtype=int), np.array(lwir_time), np.array(lwir_goeref)
 
 
 
@@ -4021,7 +4029,7 @@ def load_good_mir_frame_selection(flag_restart, dir_out_npy, plotname, path_data
             mir_id.append( id_mir)
        
         mir_time = np.array(mir_time)
-        mir_id = np.array(mir_id,dtype=np.int)    
+        mir_id = np.array(mir_id,dtype=int)    
 
         np.save(dir_out_npy+'../mir_time_info.npy',[mir_time,mir_id])
         np.save(dir_out_npy+'../mir_selection_filename.npy',mir_goeref)
@@ -4040,4 +4048,4 @@ def load_good_mir_frame_selection(flag_restart, dir_out_npy, plotname, path_data
 
     print('done')
 
-    return np.array(mir_id,dtype=np.int), np.array(mir_time), np.array(mir_goeref)
+    return np.array(mir_id,dtype=int), np.array(mir_time), np.array(mir_goeref)

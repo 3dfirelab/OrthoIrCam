@@ -441,58 +441,95 @@ if __name__ == '__main__':
     # load gcp location on ref image
     #####################################
     if not( os.path.isfile(dir_out+'gcp_ref00_{:s}.pts'.format(os.path.basename(filenames[0]).split('.')[0])) ):
-         
-        print('')
-        print('need to define gcp location in ref image (location without buffer at the resolution of img)')
-        print('saved in ', dir_out+'gcp_ref00_{:s}.pts'.format(os.path.basename(filenames[0]).split('.')[0]))
+
         frame_ref00 = camera.loadFrame(params_camera)
         #if runMode == 'lwir': frame_ref00.set_trange(params_georef['trange'])
         if runMode == 'visible': frame_ref00.set_trange([-999,-999])
         frame_ref00.init(0, None, *args_frame_ref00) 
-        fig = plt.figure(figsize=(14,7))
-        ax = plt.subplot(121)
-        ax.imshow(burnplot.mask.T, origin='lower')
-        ax.scatter(gcps_world_px[1,:],gcps_world_px[0,:],c='r',s=20)
-        for i_gcp in range(4):
-            ax.annotate('{:d}'.format(i_gcp), (gcps_world_px[1,i_gcp],gcps_world_px[0,i_gcp]))
 
-        ax = plt.subplot(122)
-        if  runMode == 'lwir':
-            print('follow instruction in plot')
-            img2plot = frame_ref00.temp[old_div(frame_ref00.bufferZone,2):old_div(-frame_ref00.bufferZone,2),  \
-                                        old_div(frame_ref00.bufferZone,2):old_div(-frame_ref00.bufferZone,2)]
-            img2plot, _, _ = tools.get_gradient(img2plot)
-            #ax.imshow(img2plot.T, origin='lower',interpolation='nearest', vmax=460)
-            ax.imshow(img2plot.T, origin='lower',interpolation='nearest', vmax=300) #sycan19sg1
+        if 'init_Firstortho_from_Frame' in inputConfig.params_lwir_camera.keys():
+
+            '''
+            use georef from other run to initialize the first frame
+            '''
+
+            frameRefInit = camera.load_existing_file(params_camera, inputConfig.params_lwir_camera['init_Firstortho_from_Frame']) 
+           
+            idx_pt_ = []
+            for pt_ in np.dstack(gcps_world[:2,:])[0]:
+                tmp_ = np.where( (np.abs(grid_e-pt_[0]) < dx/2) & (np.abs(grid_n-pt_[1]) < dx/2))
+                idx_pt_.append( [ tmp_[1][0], tmp_[0][0] ] )
+            idx_pt = np.array(idx_pt_, dtype=float)
+
+            gcps_cam_ = np.array( np.round( cv2.perspectiveTransform( np.array([idx_pt]), np.linalg.pinv( frameRefInit.H2Grid )), 0), dtype=int)
             
-            line, = ax.plot([0],[0],linestyle='None', marker='+', color='r', markersize=20)
-            #ax.set_xlim(0,nx-1)
-            #ax.set_ylim(0,ny-1)
+            '''
+            img2plot = frameRefInit.temp[old_div(frameRefInit.bufferZone,2):old_div(-frameRefInit.bufferZone,2),  \
+                                            old_div(frameRefInit.bufferZone,2):old_div(-frameRefInit.bufferZone,2)]
+
+            plt.imshow(img2plot.T, origin='lower')
+            for pt_ in gcps_cam_[0]:
+                plt.scatter(pt_[1]-frameRefInit.bufferZone/2, pt_[0]-frameRefInit.bufferZone/2,)
+            plt.show()
+            
+            sys.exit()
+            '''
+
+
             filename_suffic = 'gcp_ref00_'
             filename_ = '{:s}.pts'.format(os.path.basename(filenames[0]).split('.')[0])
-            linebuilder = cFP.cornerFirePicker(line,img2plot,filename_, 0, suffix=filename_suffic, outdir=dir_out, temp_threshold=params_camera['temperature_threshold_cornerFirePicker'], flag='4ref00')
-        
-        
-        elif runMode == 'visible':
-            print ('this needs to be done manually for now. program will stop here')
-            img_fullReso = camera.get_img_fullReso(filenames[frame_ref00.id], K, D,)
-            img2plot = img_fullReso[0]
-            ax.imshow(np.transpose(img_fullReso,[1,0,2]), origin='lower',interpolation='nearest', cmap=mpl.cm.Greys)
+            with open(params_rawData['root_postproc'] + params_camera['dir_input']+filename_suffic+filename_, 'w') as f:
+                for i,j in gcps_cam_[0]: 
+                    f.write('{:.0f}  {:.0f}\n'.format(j-frameRefInit.bufferZone/2,i-frameRefInit.bufferZone/2))
 
-            #ax.imshow(frame_ref00.img[frame_ref00.bufferZone/2:-frame_ref00.bufferZone/2,  \
-            #                          frame_ref00.bufferZone/2:-frame_ref00.bufferZone/2].T, origin='lower',interpolation='nearest',
-            #                          cmap=mpl.cm.Greys)
-        
-        
-        else:
-            print('bad run mode, runMode = ',  runMode)
-            pdb.set_trace()
-        
+        else: 
+            print('')
+            print('need to define gcp location in ref image (location without buffer at the resolution of img)')
+            print('saved in ', dir_out+'gcp_ref00_{:s}.pts'.format(os.path.basename(filenames[0]).split('.')[0]))
+            fig = plt.figure(figsize=(14,7))
+            ax = plt.subplot(121)
+            ax.imshow(burnplot.mask.T, origin='lower')
+            ax.scatter(gcps_world_px[1,:],gcps_world_px[0,:],c='r',s=20)
+            for i_gcp in range(4):
+                ax.annotate('{:d}'.format(i_gcp), (gcps_world_px[1,i_gcp],gcps_world_px[0,i_gcp]))
 
-        plt.show()
-        #print('exit now, need to restart')
-        if runMode == 'visible':
-            sys.exit()
+            ax = plt.subplot(122)
+            if  runMode == 'lwir':
+                print('follow instruction in plot')
+                img2plot = frame_ref00.temp[old_div(frame_ref00.bufferZone,2):old_div(-frame_ref00.bufferZone,2),  \
+                                            old_div(frame_ref00.bufferZone,2):old_div(-frame_ref00.bufferZone,2)]
+                img2plot, _, _ = tools.get_gradient(img2plot)
+                #ax.imshow(img2plot.T, origin='lower',interpolation='nearest', vmax=460)
+                ax.imshow(img2plot.T, origin='lower',interpolation='nearest') #sycan19sg1
+                
+                line, = ax.plot([0],[0],linestyle='None', marker='+', color='r', markersize=20)
+                #ax.set_xlim(0,nx-1)
+                #ax.set_ylim(0,ny-1)
+                filename_suffic = 'gcp_ref00_'
+                filename_ = '{:s}.pts'.format(os.path.basename(filenames[0]).split('.')[0])
+                linebuilder = cFP.cornerFirePicker(line,img2plot,filename_, 0, suffix=filename_suffic, outdir=dir_out, temp_threshold=params_camera['temperature_threshold_cornerFirePicker'], flag='4ref00')
+            
+            
+            elif runMode == 'visible':
+                print ('this needs to be done manually for now. program will stop here')
+                img_fullReso = camera.get_img_fullReso(filenames[frame_ref00.id], K, D,)
+                img2plot = img_fullReso[0]
+                ax.imshow(np.transpose(img_fullReso,[1,0,2]), origin='lower',interpolation='nearest', cmap=mpl.cm.Greys)
+
+                #ax.imshow(frame_ref00.img[frame_ref00.bufferZone/2:-frame_ref00.bufferZone/2,  \
+                #                          frame_ref00.bufferZone/2:-frame_ref00.bufferZone/2].T, origin='lower',interpolation='nearest',
+                #                          cmap=mpl.cm.Greys)
+            
+            
+            else:
+                print('bad run mode, runMode = ',  runMode)
+                pdb.set_trace()
+            
+
+            plt.show()
+            #print('exit now, need to restart')
+            if runMode == 'visible':
+                sys.exit()
 
     
     reader = asciitable.NoHeader()

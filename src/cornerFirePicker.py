@@ -158,5 +158,5 @@ class cornerFirePicker(object):
         print (self.nbrePt)
         if self.nbrePt ==4: 
             self.line.figure.canvas.mpl_disconnect(self.cid)
-            self.coords = np.array( [self.ys[1:], self.xs[1:]], dtype=np.float).T
+            self.coords = np.array( [self.ys[1:], self.xs[1:]], dtype=float).T
 

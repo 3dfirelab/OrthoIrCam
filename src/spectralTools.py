@@ -50,7 +50,7 @@ def get_tabulated_TT_Rad(srf_file, wavelength_resolution):
     b /= (SRF_base.sum() * wavelength_resolution)
 
 
-    lookUpTable_TT_Rad = np.zeros_like(b,dtype=np.dtype([('radiance',np.float),('temperature',np.float)]))
+    lookUpTable_TT_Rad = np.zeros_like(b,dtype=np.dtype([('radiance',float),('temperature',float)]))
     lookUpTable_TT_Rad = lookUpTable_TT_Rad.view(np.recarray)
     lookUpTable_TT_Rad.temperature = TT
     lookUpTable_TT_Rad.radiance = b
