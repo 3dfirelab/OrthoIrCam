@@ -23,7 +23,7 @@ If you have question handling anaconda env see [here](https://conda.io/projects/
 
 Download a modified version of opencv based on version 3.4.3 with some homebrewed modidication for the ECC function.
 This is quite old now, to compile it I had to disable manny opencv package that are of no use for the current work.
-the opencv code source is available [here](https://www.dropbox.com/s/3ta70bhjm1zyw2u/Opencv_343.tar.gz?dl=0)
+the opencv code source is available [here](https://www.dropbox.com/s/3ta70bhjm1zyw2u/Opencv_343.tar.gz?dl=0) as a tar file or [here](https://github.com/3dfirelab/opencv) is my opencv forch waiting for a pull request.
 
 There is instruction for compilation in the dir `Opencv_343/opencv` of the tar file. see file `compile_ronan.txt`
 Your anaconda env should be loaded during the compilation.
