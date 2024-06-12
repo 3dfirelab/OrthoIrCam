@@ -26,10 +26,11 @@ def get_time_shift_vis_lwir_mir(params):
     time_path_in = root + time_calibration_dir
 
     time_file_vis  = time_path_in + time_file_vis_
-    time_file_mir  = time_path_in + time_file_mir_
+    time_file_mir  = None if time_file_mir_== None else time_path_in + time_file_mir_
     time_file_lwir = time_path_in + time_file_lwir_
 
     tools.ensure_dir(out_dir)
+
 
     #get time difference
     ####################
@@ -47,12 +48,17 @@ def get_time_shift_vis_lwir_mir(params):
 
     #optris
     if os.path.isfile(time_file_lwir) :
-        lwir_time = datetime.datetime.strptime(os.path.basename(time_file_lwir).split('.')[0].split('d_')[1], "%Y-%m-%d_%H-%M-%S")
+        try: 
+            lwir_time = np.load(time_file_lwir, allow_pickle=True)[0][0]
+        except: 
+            lwir_time = datetime.datetime.strptime(os.path.basename(time_file_lwir).split('.')[0].split('d_')[1], "%Y-%m-%d_%H-%M-%S")
     else: 
         lwir_time = None
 
     #agema
-    if os.path.isfile(time_file_mir):
+    if time_file_mir == None: 
+        mir_time = None
+    elif os.path.isfile(time_file_mir):
         MIR_name = os.path.basename(time_file_mir).split('.')[0]
         res = io.loadmat(time_file_mir)
         in_ = np.array(res[MIR_name+'_DateTime'][0],dtype=np.int)
@@ -62,14 +68,18 @@ def get_time_shift_vis_lwir_mir(params):
         mir_time = None
 
     delta_t_lwir = (vis_time - lwir_time).total_seconds() 
-    delta_t_mir  = (vis_time - mir_time).total_seconds() 
-
+    
+    if mir_time!=None:  
+        delta_t_mir  = (vis_time - mir_time).total_seconds() 
+    else: 
+        delta_t_mir = None
     print('Vis  ', vis_time)
     print('lwir ', datetime.datetime.strftime(lwir_time, "%Y-%m-%d_%H-%M-%S.%f"), delta_t_lwir)
-    print('mir  ', datetime.datetime.strftime(mir_time, "%Y-%m-%d_%H-%M-%S.%f"),  delta_t_mir)
+    if mir_time!=None: print('mir  ', datetime.datetime.strftime(mir_time, "%Y-%m-%d_%H-%M-%S.%f"),  delta_t_mir)
 
     np.save(out_dir+params['plotname']+'_lwir2vis_time',[delta_t_lwir])
-    np.save(out_dir+params['plotname']+'_mir2vis_time',[delta_t_mir])
+    if mir_time!=None: np.save(out_dir+params['plotname']+'_mir2vis_time',[delta_t_mir])
+
 
     return delta_t_lwir, delta_t_mir
 

@@ -160,7 +160,7 @@ class loadFrame(object):
         self.temp           = temp 
         self.imgRaw         = convert_2_uint8(tempRaw)
       
-        if False:# feature_params is not None:
+        if feature_params is not None:
             #get thetrange that gives the largest number of features
             self.brute_opti_scan_nbre=5
             self.set_trange( scipy.optimize.brute(residual,\
@@ -948,7 +948,7 @@ def get_feature(frame, feature_params, input_img=['img','trange']):
 
 #################################################
 def convert_2_uint8(x,trange=None,flag_sqrtScale=True):
-    x = np.array(x,dtype=np.float)
+    x = np.array(x,dtype=float)
     if  trange is None: 
         xmin, xmax = x.min(), x.max()
     else:

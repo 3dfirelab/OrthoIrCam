@@ -149,6 +149,7 @@ class cornerFirePicker(object):
        
         else:
             xs, ys = xs_,ys_
+        
         self.xs.append(xs)
         self.ys.append(ys)
         self.line.set_data(self.xs, self.ys)

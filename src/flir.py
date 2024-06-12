@@ -47,6 +47,10 @@ import shutil
 from netCDF4 import Dataset
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from importlib import reload
+import rasterio
+import warnings
+from rasterio import logging
+warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
 
 #homebrewed 
 import spectralTools
@@ -1473,25 +1477,43 @@ def mask_helico_leg(frame_in,\
         return mask_sinle_img
 
 
-
 ##########################################################
 # below is code to read raw flir format and remove noise
 ##########################################################
 
-
+def get_datetime_original_from_file(file_path):
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+    
+    for line in lines:
+        if line.startswith('Date/Time Original'):
+            parts = line.split(':', 1)[1].split('+')[0]
+            return datetime.datetime.strptime( parts.strip(),"%Y:%m:%d %H:%M:%S.%f")
+    
+    return None
 ##################################################
 def read_flir(filename):
-    key = os.path.basename(filename).split('.')[0]
-    data = io.loadmat(filename)
-    try: 
-        frame     = data['{:s}'.format(key)][::-1].T # K
-        time_info = data['{:s}_DateTime'.format(key)][0]
-    except: 
-        frame     = data['Frame'][::-1].T # C
-        time_info = data['File_DateTime'][0]
-    
-    time = datetime.datetime.strptime('{:04.0f}-{:02.0f}-{:02.0f}_{:02.0f}:{:02.0f}:{:02.0f}:{:03.0f}'.format(*time_info),"%Y-%m-%d_%H:%M:%S:%f")
-    return time, frame
+    if '.MAT' in filename:
+        key = os.path.basename(filename).split('.')[0]
+        data = io.loadmat(filename)
+        try: 
+            frame     = data['{:s}'.format(key)][::-1].T # K
+            time_info = data['{:s}_DateTime'.format(key)][0]
+        except: 
+            frame     = data['Frame'][::-1].T # C
+            time_info = data['File_DateTime'][0]
+        
+        time = datetime.datetime.strptime('{:04.0f}-{:02.0f}-{:02.0f}_{:02.0f}:{:02.0f}:{:02.0f}:{:03.0f}'.format(*time_info),"%Y-%m-%d_%H:%M:%S:%f")
+        return time, frame
+
+
+    elif '.tiff' in filename:
+        with rasterio.open(filename) as src:
+            # Read the first band
+            frame = src.read(1)[::-1,:].T  
+        
+        time = get_datetime_original_from_file(filename.replace('.tiff','.txt'))
+        return time, frame
 
 
 
@@ -1551,13 +1573,27 @@ def processRawData(ignitionTime,params, params_camera, flag_restart):
     flag_applyMask = True
 
 
+    if 'characterBeforeNumberInMatFile' not in params_camera.keys(): 
+        characterBeforeNumberInMatFile = '_'
+    else: 
+        characterBeforeNumberInMatFile = params_camera['characterBeforeNumberInMatFile']
+
+    if 'fileExt' not in params_camera.keys(): 
+        fileExt_here = '*.MAT'
+    else: 
+        fileExt_here = '*.'+params_camera['fileExt']
+
 
     #read time diff
     ############
     #load time difference 
-    delta_t_vis_lwir, delta_t_vis_mir = 0,0#cameraTools.get_time_shift_vis_lwir_mir(params)
-    delta_t_lwir_mir = delta_t_vis_lwir - delta_t_vis_mir
-
+    if params['dir_time_calibration'] == 'settime':
+        delta_t_vis_lwir, delta_t_vis_mir = params['time_calibration_vis'],params['time_calibration_mir']
+        delta_t_lwir_mir  = params['time_calibration_lwir']
+    
+    else:
+        delta_t_vis_lwir, delta_t_vis_mir = cameraTools.get_time_shift_vis_lwir_mir(params)
+        delta_t_lwir_mir = delta_t_vis_lwir - delta_t_vis_mir
 
     if not(flag_restart):
         if os.path.isdir(dir_out_lwir + 'raw_data/'): shutil.rmtree(dir_out_lwir + 'raw_data/')
@@ -1569,7 +1605,7 @@ def processRawData(ignitionTime,params, params_camera, flag_restart):
     tools.ensure_dir(dir_out_lwir_npy)
     
     #get index
-    filenames_ = sorted(glob.glob(dir_in+'*.MAT'))
+    filenames_ = sorted(glob.glob(dir_in+fileExt_here))
     if len(filenames_)==0:
         filenames_ = sorted(glob.glob(dir_in+'*.mat'))
     filenames = np.array(len(filenames_)*[('mm',0,0)],dtype=np.dtype([('name','U500'),('idx1',int),('idx2',int)])) 
@@ -1577,8 +1613,10 @@ def processRawData(ignitionTime,params, params_camera, flag_restart):
     filenames.name = filenames_
     for ifile, filename in enumerate(filenames.name):
         #filenames.idx1[ifile] = int(os.path.basename(filename).split('.')[0].split('_')[0].split('R')[1])
-        filenames.idx2[ifile] = int(os.path.basename(filename).split('.')[0].split('_')[1])
-    
+        try: 
+            filenames.idx2[ifile] = int(os.path.basename(filename).split('.')[0].split(characterBeforeNumberInMatFile)[1])
+        except: 
+            pdb.set_trace()
 
     out_time =  np.array(len(filenames_)*[('mm',0)],dtype=np.dtype([('name','U500'),('time',float)]))
     out_time = out_time.view(np.recarray)
@@ -1586,7 +1624,7 @@ def processRawData(ignitionTime,params, params_camera, flag_restart):
     #save npy
     ############
     if flag_save_npy:
-        print('read mat files: ')
+        print('read mat files: ', len(filenames))
         first_image_reached = False
         #MERDE load only 2000 first file
         time_igni_previous = -1.e6
@@ -1594,7 +1632,8 @@ def processRawData(ignitionTime,params, params_camera, flag_restart):
         srf_file = '../data_static/Camera/'+camera_name.split('_')[0]+'/SpectralResponseFunction/'+camera_name.split('_')[0]+'.txt'
         wavelength_resolution = 0.01
         param_set_temperature = spectralTools.get_tabulated_TT_Rad(srf_file, wavelength_resolution)
-        
+       
+
         for ifile, (filename, _, _) in enumerate(np.sort(filenames,order=['idx1','idx2'])): #[0::int(params['period_lwir'])]) :
             
             if filename == 'mm': continue
@@ -1609,7 +1648,7 @@ def processRawData(ignitionTime,params, params_camera, flag_restart):
             time_igni = (time_date-ignitionTime).total_seconds() - delta_t_lwir_mir
 
             #flir_rad = spectralTools.conv_temp2Rad(flir_temp, srf_file, wavelength_resolution=wavelength_resolution)
-
+            
             if time_igni < float(params['startTime_lwir']): continue
             if time_igni > float(params['endTime_lwir'])  : break
 

@@ -1,59 +1,59 @@
 params_flag = {
-             'flag_parallel' : True,
+             'flag_parallel' : False,
              'flag_restart'  : False,
 
              'flag_georef_mode' : 'SimpleHomography', #'WithTerrain' (not working) or 'SimpleHomography'
 
               #lwir
-              'flag_lwir_processRawData' : False,
-              'flag_lwir_plot_warp' :      True,
-              'flag_lwir_georef' :      True,   
-              'flag_lwir_plot_georef' : True,
+              'flag_lwir_processRawData' : True,
+              'flag_lwir_plot_warp' :      False,
+              'flag_lwir_georef' :      False,   
+              'flag_lwir_plot_georef' : False,
               #vis
               'flag_vis_processRawData' : False,
-              'flag_vis_plot_warp' : False,
-              'flag_vis_georef' : False,
-              'flag_vis_plot_georef' : False,
+              'flag_vis_plot_warp' : True,
+              'flag_vis_georef' : True,
+              'flag_vis_plot_georef' : True,
               #mir
               'flag_mir_processRawData': False,
 
                }
 
-params_rawData = {'root':           '/home/paugam/disc/EstrellaData/ClosingGap/data/',
-                  'root_data':      '/home/paugam/disc/EstrellaData/ClosingGap/data/2019_Sycan/south_grass_1/',
-                  #'root_postproc' : '/home/paugam/2008_Ngarkat/Postproc/',
-                  'root_postproc' : '/home/paugam/disc/EstrellaData/ClosingGap/Postproc/2019_Sycan/south_grass_1/',
-                  'plotname': 'sygs1',
-                  'fire_date'      : '2019-10-11',
+params_rawData = {'root':           '/media/paugam/anneuden/data/2024_Australia/',
+                  'root_data':      '/media/paugam/anneuden/data/2024_Australia/',
+                  'root_postproc' : '/media/paugam/anneuden/data/2024_Australia/Postproc/',
+                  'plotname': 'ausFilk',
+                  'fire_date'      : '2024-04-26',
                   
                   #lwir
-                  'root_data_DirLwir': '/XT/MAT/',
+                  #'root_data_DirLwir': '/LWIR/radiometric/',
+                  'root_data_DirLwir': '/LWIR/radiometric/',
                   'startTime_lwir' :  0,
-                  'endTime_lwir'   :  800,
+                  'endTime_lwir'   :  220,
                   'period_lwir'    :  -1. , # seconds. set a negative value to use all frame
 
                   #vis
-                  'root_data_DirVis': None,
-                  'startTimeVis' : None,
-                  'endTimeVis'   : None,
+                  'root_data_DirVis': 'VIS/frames10Hz/' ,
+                  'startTimeVis' : 0,
+                  'endTimeVis'   : 220,
 
-                  'dir_time_calibration' :  None, 
-                  'time_calibration_vis' :  None,
-                  'time_calibration_mir' :  None,
-                  'time_calibration_lwir':  None,
+                  'dir_time_calibration' :  'settime', 
+                  'time_calibration_vis' :  0,
+                  'time_calibration_mir' :  0,
+                  'time_calibration_lwir':  0,
                  }
 
 
 params_gps = {  'dir_gps'      : 'Instruments_Location/',
                 #
-                'cf_format'    : 'shapeFile_latlong', 
-                'loc_cf_file'  : 'Sycan_plate_pts_MC_SG1',
-                'cf_feature_name'   : 'Sycan_plate_pts_MC', 
+                'cf_format'    : 'kml_latlong', 
+                'loc_cf_file'       : 'ausCf.kml',
+                'cf_feature_name'   : 'ausCf', 
                 'cornerFireName' : 'cornerFireNames.txt',
                 #
                 'loc_camera_file' : None,
                 #
-                'contour_file'               : 'sygsplotctr.kml', 
+                'contour_file'               : 'ausCf_plotctr.kml', 
                 'contour_feature_name'   : 'plotctr', 
                 'ctr_format'                 : 'kml_latlong', 
                 'contour_file_shrinkPlotMask': None, # (x2 grid_resolution) 
@@ -61,7 +61,7 @@ params_gps = {  'dir_gps'      : 'Instruments_Location/',
 
 params_grid={
             'grid_resolution' : .5,
-            'grid_size' : 200,
+            'grid_size' : 120,
             }
 
 params_lwir_camera={
@@ -69,14 +69,16 @@ params_lwir_camera={
             #driver.py
             ########
             'flag_costFunction' : 'EP08',
+            'fileExt':'tiff',
             'camera_name' : 'xt_09mm',
             'cameraLens' : 69,
             'cameraDimension' : [512, 640],
+            'characterBeforeNumberInMatFile':'_',
             'load_radiance' : False,
             #
             'dir_input'      : 'LWIR/',
             'dir_img_input'  : 'raw_data/npy/',
-            'dir_img_input_*': 'sygs1_*.npy',
+            'dir_img_input_*': 'ausFilk_*.npy',
             # use in cornerFirePicker in driver.py to control fire cluster selection
             'temperature_threshold_cornerFirePicker': -999, 
             # param to convert theraml signal to uint8 img in optris.py
@@ -145,25 +147,26 @@ params_lwir_camera={
             }
 
 params_vis_camera={
+                'warp_using_fixCamera': False,          # for small scale experiment with fix camera, homography from first frame is used
                 'inverseColor' : False,
                 'warp_on_prev_first': False, 
                 'shrink_factor' : 4,
-                'dir_img_input_*' : '*.JPG',
+                'dir_img_input_*' : '*.png',
                 'track_mode' : 'track_background',
                 'ref00Update_threshold' : 0.8,
                 'flag_costFunction' : 'EP08',
                 'kernel_plot' : 3,
-                'cameraDimension' : [3840, 2880],
-                'camera_name' : 'goproKCL',
-                'cameraLens' : 'na',
+                'cameraDimension' : [3840, 2160],
+                'camera_name' : 'djiVisFilkov_09mm',
+                'cameraLens' : '60',
                 'final_opti_threshold' : -0.0,
-                'time_tail_ref00' : 60.0,
-                'energy_good_1' : 0.7,
-                'energy_good_2' : 0.65,
+                'time_tail_ref00' : 20.0,
+                'energy_good_1' : 0.65,
+                'energy_good_2' : 0.55,
                 'time_start_processing' : 0,
                 'clahe_clipLimit' : 2,
-                'filenames_no_helico_mask' : [2885, 2917],
-                'dir_input' : 'VIS301c/',
+                'filenames_no_helico_mask' : [0, 10],
+                'dir_input' : 'VIS/',
                 'dir_img_input' : 'Raw/',
                 'forceRef00Updateat' : [],
                 'kernel_warp' : 7,
@@ -173,6 +176,7 @@ params_vis_camera={
                 'of_qualityLevel':0.3,
                 'of_feature_kernel_ring':True,
                 'kernel_ring':51,
+                'temperature_threshold_cornerFirePicker' : -999
                 }
 
 params_mir_camera={
@@ -197,7 +201,7 @@ params_mir_camera={
 
 params_georef={
                 'dir_dem_input' : 'DEM/',
-                'dem_file' : '19sycan_sygs1_dem.npy',
+                'dem_file' : '24AusFilkov_ausFilk_dem.npy',
                 'run_opti' : True,
                 # lwir
                 'trange' : [22, 150],

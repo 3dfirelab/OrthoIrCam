@@ -205,8 +205,13 @@ if __name__ == '__main__':
     file_ignition_time = params_rawData['root_data'] + 'ignition_time.dat'
     f = open(file_ignition_time,'r')
     lines = f.readlines()
-    ignitionTime = datetime.datetime.strptime(params_rawData['fire_date']+'_'+lines[0].rstrip(), "%Y-%m-%d_%H:%M:%S")
-    endTime = datetime.datetime.strptime(params_rawData['fire_date']+'_'+lines[1].rstrip(), "%Y-%m-%d_%H:%M:%S")
+    try: 
+        ignitionTime = datetime.datetime.strptime(params_rawData['fire_date']+'_'+lines[0].rstrip(), "%Y-%m-%d_%H:%M:%S.%f")
+        endTime = datetime.datetime.strptime(params_rawData['fire_date']+'_'+lines[1].rstrip(), "%Y-%m-%d_%H:%M:%S.%f")
+    except: 
+        ignitionTime = datetime.datetime.strptime(params_rawData['fire_date']+'_'+lines[0].rstrip(), "%Y-%m-%d_%H:%M:%S")
+        endTime = datetime.datetime.strptime(params_rawData['fire_date']+'_'+lines[1].rstrip(), "%Y-%m-%d_%H:%M:%S")
+
     fire_durationTime = (endTime-ignitionTime).total_seconds()
 
 
@@ -236,11 +241,11 @@ if __name__ == '__main__':
     #if (mpl.get_backend() != 'Agg') & (mpl.get_backend() != 'agg'): 
     #    plt.ion()
 
-
+    '''
     #Select the file name that are going to be read
     ###############################################
     filenames = np.array(sorted(glob.glob(dir_out + params_camera['dir_img_input'] +  params_camera['dir_img_input_*'])))
-    filenames_timelookupTable = np.load(dir_out+ params_camera['dir_img_input'] + 'filename_time.npy')
+    filenames_timelookupTable = np.load(dir_out+ params_camera['dir_img_input'] + 'filename_time.npy', allow_pickle=True)
     filenames_timelookupTable = filenames_timelookupTable.view(np.recarray)
     if os.path.isfile(dir_out+ params_camera['dir_img_input'] + 'filename.npy'):
         filenames  = np.load(dir_out+ params_camera['dir_img_input'] + 'filename.npy')
@@ -264,7 +269,7 @@ if __name__ == '__main__':
 
         np.save(dir_out+ params_camera['dir_img_input'] + 'filename', filenames ) 
 
-
+    '''
 
     # params for ShiTomasi corner detection
     feature_params = dict( maxCorners = 5000,
@@ -328,6 +333,7 @@ if __name__ == '__main__':
 
     grid_e, grid_n = burnplot.grid_e, burnplot.grid_n
 
+    sys.exit()
 
     #and correct gcp to reflet terrain 
     #---------------------------------
@@ -419,12 +425,12 @@ if __name__ == '__main__':
         if (not(flag_restart)) | (not(os.path.isfile(dir_+'/'+ params_camera['dir_img_input']+'image_pdf_reference_tools.npy'))):
             if params_camera['filenames_no_helico_mask'] is not None:
                 image_pdf_reference_tools = camera.build_reference_pdf(filenames, params_camera['filenames_no_helico_mask'], K, D, params_camera['shrink_factor'])
-                np.save(dir_+'/'+ params_camera['dir_img_input']+'image_pdf_reference_tools',image_pdf_reference_tools)    
+                np.save(dir_+'/'+ params_camera['dir_img_input']+'image_pdf_reference_tools',np.array(image_pdf_reference_tools,dtype=object) )   
             else:
                 image_pdf_reference_tools = None
         else:
             if params_camera['filenames_no_helico_mask'] is not None:
-                image_pdf_reference_tools = np.load(dir_+'/'+ params_camera['dir_img_input']+'image_pdf_reference_tools.npy')
+                image_pdf_reference_tools = np.load(dir_+'/'+ params_camera['dir_img_input']+'image_pdf_reference_tools.npy', allow_pickle=True)
             else:
                 image_pdf_reference_tools = None
 
@@ -498,9 +504,9 @@ if __name__ == '__main__':
                 print('follow instruction in plot')
                 img2plot = frame_ref00.temp[old_div(frame_ref00.bufferZone,2):old_div(-frame_ref00.bufferZone,2),  \
                                             old_div(frame_ref00.bufferZone,2):old_div(-frame_ref00.bufferZone,2)]
-                img2plot, _, _ = tools.get_gradient(img2plot)
-                #ax.imshow(img2plot.T, origin='lower',interpolation='nearest', vmax=460)
-                ax.imshow(img2plot.T, origin='lower',interpolation='nearest') #sycan19sg1
+                #img2plot, _, _ = tools.get_gradient(img2plot)
+                ax.imshow(img2plot.T, origin='lower',interpolation='nearest', vmin=5,vmax=15)
+                #ax.imshow(img2plot.T, origin='lower',interpolation='nearest') #sycan19sg1
                 
                 line, = ax.plot([0],[0],linestyle='None', marker='+', color='r', markersize=20)
                 #ax.set_xlim(0,nx-1)
@@ -511,27 +517,34 @@ if __name__ == '__main__':
             
             
             elif runMode == 'visible':
-                print ('this needs to be done manually for now. program will stop here')
-                img_fullReso = camera.get_img_fullReso(filenames[frame_ref00.id], K, D,)
-                img2plot = img_fullReso[0]
-                ax.imshow(np.transpose(img_fullReso,[1,0,2]), origin='lower',interpolation='nearest', cmap=mpl.cm.Greys)
+                
 
-                #ax.imshow(frame_ref00.img[frame_ref00.bufferZone/2:-frame_ref00.bufferZone/2,  \
-                #                          frame_ref00.bufferZone/2:-frame_ref00.bufferZone/2].T, origin='lower',interpolation='nearest',
-                #                          cmap=mpl.cm.Greys)
+                img_fullReso = camera.get_img_fullReso(filenames[frame_ref00.id], K, D,)
+                img2plot = cv2.cvtColor(img_fullReso, cv2.COLOR_BGR2GRAY)
+               
+                #img2plot, _, _ = tools.get_gradient(img2plot)
+                ax.imshow(img2plot.T, origin='lower', cmap=mpl.cm.Greys_r)
+                #ax.imshow(img2plot.T, origin='lower',interpolation='nearest') #sycan19sg1
+                
+                line, = ax.plot([0],[0],linestyle='None', marker='+', color='r', markersize=20)
+                #ax.set_xlim(0,nx-1)
+                #ax.set_ylim(0,ny-1)
+                filename_suffic = 'gcp_ref00_'
+                filename_ = '{:s}.pts'.format(os.path.basename(filenames[0]).split('.')[0])
+                linebuilder = cFP.cornerFirePicker(line,img2plot,filename_, 0, suffix=filename_suffic, outdir=dir_out, temp_threshold=params_camera['temperature_threshold_cornerFirePicker'], flag='4ref00')
+                #ax.imshow(np.transpose(img_fullReso,[1,0,2]), origin='lower',interpolation='nearest', cmap=mpl.cm.Greys)
+
             
             
             else:
                 print('bad run mode, runMode = ',  runMode)
                 pdb.set_trace()
             
-
             plt.show()
             #print('exit now, need to restart')
-            if runMode == 'visible':
-                sys.exit()
+            #if runMode == 'visible':
+            #    sys.exit()
 
-    
     reader = asciitable.NoHeader()
     reader.data.splitter.delimiter = ' '
     reader.data.splitter.process_line = None
@@ -1067,7 +1080,6 @@ if __name__ == '__main__':
         frame.set_pause(rvec,tvec)
 
             
-
         #----------------------------------------------------------------------------------
         # georef frame 
         #----------------------------------------------------------------------------------
@@ -1139,7 +1151,6 @@ if __name__ == '__main__':
                                                                                                         georef_img,georef_mask,                                  \
                                                                                                         georef_temp,                                             \
                                                                                                         georef_radiance ]                        , dtype=object))    
-
 
         #------------------------
         #plot georef 
@@ -1218,8 +1229,7 @@ if __name__ == '__main__':
 
             fig_georef.savefig(dir_out_georef_png+'{:06d}.png'.format(frame.id))
             plt.close(fig_georef) 
-            
-        
+           
        
         #------------------------
         # plot Warping info 
@@ -1266,17 +1276,18 @@ if __name__ == '__main__':
                                                 (frame.nj+frame.bufferZone,frame.ni+frame.bufferZone),\
                                                 borderValue=0,flags=cv2.INTER_LINEAR                 )
                 colorbar = mpl.cm.inferno
+                tempmin_ = plot_warp[np.where(plot_warp>0)].min()
+                if frame.temp[np.where(frame.temp>0)].mean() < 300: 
+                    tempmin_ = 10
+                    tempmax_ = 50
+                else:
+                    tempmin_ = 290
+                    tempmax_ = 440
+            
             elif frame.type == 'visible': 
                 plot_warp = frame.warp
                 colorbar = mpl.cm.Greys_r
            
-            tempmin_ = plot_warp[np.where(plot_warp>0)].min()
-            if frame.temp[np.where(frame.temp>0)].mean() < 300: 
-                tempmin_ = 10
-                tempmax_ = 50
-            else:
-                tempmin_ = 290
-                tempmax_ = 440
 
             ax =  tools.get_plot_axis('warp',params_camera, params_georef)
             if frame.type == 'lwir':   im=ax.imshow(plot_warp.T,origin='lower',cmap=colorbar,vmin=tempmin_,vmax=tempmax_)

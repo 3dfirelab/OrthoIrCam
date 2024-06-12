@@ -14,7 +14,7 @@ import transformation
 import multiprocessing
 import pickle 
 import pandas
-from skimage import feature, measure, exposure, filters
+from skimage import feature, measure, exposure, filters, metrics
 import scipy
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -187,14 +187,14 @@ def create_grid(root_postproc, fireName,
             plotmask[idx] = 1
         plotmask = plotmask.T
 
-    #deprecated
-    elif False :#flag_ctr_format.split('_')[0] == 'textFile':
+    elif flag_ctr_format.split('_')[0] == 'textFile':
         #the contour of the plot
         flag_textFormat  = flag_ctr_format.split('_')[1]
         f = open(contour_file,'r')
         lines = f.readlines()
         pts_utm3D = np.zeros([3,len(lines)-1])
         f.close()
+        
         for i_line, line in enumerate(lines[1:]):
             pts_utm3D[:,i_line] = line.rstrip().split(' ')[0:3] 
 
@@ -662,17 +662,22 @@ def load_loc_cornerFire(root_postproc, params_gps, conv_ll2utm, cornerFireName='
             print('shape file for cf location is not well set up.')
             pdb.set_trace()
    
-    #deprecated
     elif flag_cf_format.split('_')[0] == 'textFile':
-        cf_gps_ll = np.zeros([3,4])
         cf_gps_utm = np.zeros([3,4])
+        
         f = open(root_postproc+dir_gps+cf_file,'r')
         lines = f.readlines()
         f.close()
-        for i_line, line in enumerate(lines[1:]):
-           cf_gps_ll[:,i_line] = [float(xx) for xx in line.rstrip().split(' ')[0:3]] # conversion to float
+        
+        if flag_cf_format.split('_')[1] == 'xyz': 
 
-        cf_gps_ll = cf_gps_ll[[1,0,2],:]
+            for i_line, line in enumerate(lines[1:]):
+               cf_gps_utm[:,i_line] = [float(xx) for xx in line.rstrip().split(' ')[0:3]] # conversion to float
+
+        else: 
+            print('{:s} not defined for {:s} in load_loc_cornerFire'.format(flag_cf_format.split('_')[1],flag_cf_format.split('_')[0]))
+            pdb.set_trace()
+
 
     elif flag_cf_format.split('_')[0] == 'kml':
         #get first the name of the cf. it must match the order of the cf in the cornerFireLocator
@@ -686,8 +691,10 @@ def load_loc_cornerFire(root_postproc, params_gps, conv_ll2utm, cornerFireName='
         pts_name = np.array([ pt[0] for pt in pts])
         for icf, cf_name in enumerate(cf_names):
             idx_ = np.where(pts_name==cf_name)[0][0]
-            cf_gps_ll[:,icf] = [pts[idx_][1][1], pts[idx_][1][0], pts[idx_][2] ]
-
+            try: 
+                cf_gps_ll[:,icf] = [pts[idx_][1][1], pts[idx_][1][0], pts[idx_][2] ]
+            except: 
+                pdb.set_trace()
     else: 
         print('merde stop here')
         pdb.set_trace()
@@ -699,10 +706,11 @@ def load_loc_cornerFire(root_postproc, params_gps, conv_ll2utm, cornerFireName='
     #utm.SetUTM(UTMZone(  *cf_gps_ll[:2,0] ), )
     #conv_ll2utm = osr.CoordinateTransformation(wgs84, utm)
     #conv_utm2ll = osr.CoordinateTransformation(utm,wgs84)
-  
-    #conversion to utm
-    for i in range(cf_gps_ll.shape[1]):
-        cf_gps_utm[:,i] = conv_ll2utm.TransformPoint(*cf_gps_ll[:,i])
+ 
+    if cf_gps_utm.sum() == 0: 
+        #conversion to utm
+        for i in range(cf_gps_ll.shape[1]):
+            cf_gps_utm[:,i] = conv_ll2utm.TransformPoint(*cf_gps_ll[:,i])
   
     return cf_gps_utm
 
@@ -710,7 +718,7 @@ def load_loc_cornerFire(root_postproc, params_gps, conv_ll2utm, cornerFireName='
 
 ###########################################################
 def get_center_Coord_ll(flag_format, contour_file, params_gps=None):
-    
+   
     if flag_format.split('_')[0] == 'shapeFile':
         #load shape file
         ctr = shapefile.Reader(contour_file)
@@ -724,7 +732,6 @@ def get_center_Coord_ll(flag_format, contour_file, params_gps=None):
             #print attributes[0]
         center = np.array(pts).mean(axis=0)
       
-    #deprecated
     elif flag_format.split('_')[0] == 'textFile':
         f = open(contour_file,'r')
         lines = f.readlines()
@@ -735,10 +742,10 @@ def get_center_Coord_ll(flag_format, contour_file, params_gps=None):
             pts[:,i_line] = [float(xx) for xx in line.rstrip().split(' ')]
         center   = [pts[0,:].mean(), pts[1,:].mean()]
         
-
     elif flag_format.split('_')[0] == 'kml':
         pts = load_polygon_from_kml(contour_file,params_gps['contour_feature_name'])
         center   = [pts[0,:].mean(), pts[1,:].mean()]
+    
     return center
 
 
@@ -1407,7 +1414,8 @@ def get_matching_feature_SIFT(frame,frame_ref, params_camera, lk_params, flag='u
 
     while nbre_match_pt_1 < 200: 
 
-        sift = cv2.xfeatures2d.SIFT_create(nbre_call_sift*nbre_feature_to_select) # limit number of feature
+        #sift = cv2.xfeatures2d.SIFT_create(nbre_call_sift*nbre_feature_to_select) # limit number of feature
+        sift = cv2.SIFT_create(nbre_call_sift*nbre_feature_to_select) # limit number of feature
        
         if mask_in is None:
             mask_ = mask_in
@@ -2047,7 +2055,8 @@ def get_ssim(frame, frame_ref, win_size_ssim=21 ):
     img_ssim_ref = np.zeros([ni_,nj_]); img_ssim_ref[idx_ssim] = warp_ref_[idx_ssim] 
     img_ssim     = np.zeros([ni_,nj_]); img_ssim[idx_ssim] = warp_[idx_ssim]    
     
-    _, ssim_2d = measure.compare_ssim(img_ssim_ref, img_ssim, win_size=win_size_ssim, full=True)
+    #_, ssim_2d = measure.compare_ssim(img_ssim_ref, img_ssim, win_size=win_size_ssim, full=True)
+    _, ssim_2d = metrics.structural_similarity(img_ssim_ref, img_ssim, win_size=win_size_ssim, full=True)
 
     mask_ssim = np.zeros_like(ssim_2d); mask_ssim[idx_ssim] = 1
     idx = idx_ssim_ok(mask_ssim, win_size_ssim, plotMask_, plumeMask_, ssim_2d)
@@ -2286,7 +2295,7 @@ def idx_ssim_ok(mask_data_combined, winsize, plotMask, plumeMask, ssim_2d):
     #    plt.clf(); plt.imshow(mask_without_winsize.T,origin='lower'); plt.show(); pdb.set_trace()
 
     return np.where( (mask_without_winsize) & (plotMask!=2),                                      \
-                     np.ones(plotMask.shape,dtype=np.bool), np.zeros(plotMask.shape,dtype=np.bool)) 
+                     np.ones(plotMask.shape,dtype=bool), np.zeros(plotMask.shape,dtype=bool)) 
 
 
 #####################################################
@@ -2533,7 +2542,11 @@ def load_polygon_from_kml(kml_file,polygon_name):
     if '_geometry' not in features[i_feature].__dict__:
         pts = []
         for ff in features[i_feature].features(): 
-            pts.append( [ff.name, np.dstack(ff.geometry.coords.xy)[0][0], ff.geometry.z] )
+            try:
+                pts.append( [ff.name, np.dstack(ff.geometry.coords.xy)[0][0], ff.geometry.z] )
+            except: 
+                pts.append( [ff.name, [*ff.geometry.coords[0][:2]], ff.geometry.coords[0][2] ] )
+
         return pts
 
     else:
@@ -2548,7 +2561,7 @@ def load_polygon_from_kml(kml_file,polygon_name):
 
 ###################################################
 def get_plot_axis(field, params_camera, params_georef):
-    if params_camera['flag_costFunction']=='ssim':
+    if (params_camera['flag_costFunction']=='ssim') | (params_camera['flag_costFunction']=='EP08'):
         if field == 'warp': 
             return plt.subplot2grid((2,2), (0,0)) 
         elif field == 'img': 
@@ -2859,6 +2872,28 @@ def set_frame_using_homography(frame, frame_ref00, frame_ref00_init, framesID_re
     nbre_of_call_warp_frame = 0
     results_feature =  [None, None]
 
+    if params_camera['warp_using_fixCamera']: 
+        
+        H_new = frame_ref00.H2Ref
+        nx,ny = frame.img.shape
+        frame.set_warp(cv2.warpPerspective(frame.img, H_new,               \
+                                     (ny,nx),                              \
+                                     borderValue=0))
+
+
+        frame.set_maskWarp( cv2.warpPerspective(frame.mask_img, H_new,         \
+                                         (ny,nx),                              \
+                                         borderValue=0,flags=cv2.INTER_NEAREST))
+        
+        frame.set_homography_to_ref(H_new)
+        frame.set_flag_cfMode('anchored')
+        
+        frame.set_correlation(1,1,1,1)
+        frame.set_id_best_ref(frame_ref00.id)
+        frame.set_id_ref00(frame_ref00.id)
+        frame. save_number_ref_frames_used(1) 
+        return frame
+
     if params_camera['warp_on_prev_first']:
 
         #use previous frame first to warp the current image. if corr to ref00 is acceptable then it is set as the best frame 
@@ -2882,7 +2917,7 @@ def set_frame_using_homography(frame, frame_ref00, frame_ref00_init, framesID_re
         if frame.type == 'lwir':
             nbre_call_limit = 20./params_georef['#frames_history_tail_lwir'] #MERDEMERDE
         elif frame.type == 'visible':
-            nbre_call_limit = 100./params_georef['#frames_history_tail_visible'] #MERDEMERDE
+            nbre_call_limit = 30./params_georef['#frames_history_tail_visible'] #MERDEMERDE
         
         while (frames_ref_number<= nbre_frame_availale_since_last_anchor ):#MERDEONE
       
